@@ -39,6 +39,13 @@ if len(viscams) > 3:
 	print 'only 3 cameras are working for now'
 	sys.exit(1)
 
+
+print
+print 'try to query power parameter'
+print 'hh',v1._query('power') 
+
+"""
+
 print 'power off'
 v1.power(0)
 sleep(1)
@@ -53,4 +60,4 @@ v1.stop()
 sleep(0.2)
 print 'home'
 v1.home()
-sleep(10)
+sleep(10)"""
