@@ -1,11 +1,93 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
+import serial
+from thread import allocate_lock
+import glob
 
 debug=True
 
-"""WE NEED AN INIT FILE TO SEND ADDRESS_SET AND _if_clear
-VISCA CAMERA WILL ANSWER TO THE ADDRESS_SET AND WE CREATE A VISCA INSTANCE PER CAMERA"""
+class Serial(object):
+    def __init__(self):
+        self.mutex = allocate_lock()
+        self.port=None
+
+    def listports(self):
+        """ Lists serial port names
+
+            :raises EnvironmentError:
+                On unsupported or unknown platforms
+            :returns:
+                A list of the serial ports available on the system
+        """
+        if sys.platform.startswith('win'):
+            ports = ['COM%s' % (i + 1) for i in range(256)]
+        elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
+            # this excludes your current terminal "/dev/tty"
+            ports = glob.glob('/dev/tty[A-Za-z]*')
+        elif sys.platform.startswith('darwin'):
+            ports = glob.glob('/dev/tty.*')
+        else:
+            raise EnvironmentError('Unsupported platform')
+
+        result = []
+        for port in ports:
+            try:
+                s = serial.Serial(port)
+                s.close()
+                result.append(port)
+            except (OSError, serial.SerialException):
+                pass
+        return result
+
+    def open(self,portname):
+        self.mutex.acquire()
+        self.portname=portname
+        if (self.port == None):
+            try:
+                self.port = serial.Serial(self.portname,9600,timeout=2,stopbits=1,bytesize=8,rtscts=False, dsrdtr=False)
+                self.port.flushInput()
+            except Exception as e:
+                pass
+                #raise e
+                self.port = None
+        self.mutex.release()    
+
+    def recv_packet(self,extra_title=None):
+        if self.port:
+            # read up to 16 bytes until 0xff
+            packet=''
+            count=0
+            while count<16:
+                s=self.port.read(1)
+                if s:
+                    byte = ord(s)
+                    count+=1
+                    packet=packet+chr(byte)
+                else:
+                    print "ERROR: Timeout waiting for reply"
+                    break
+                if byte==0xff:
+                    break
+            return packet
+        print 'no reply from serial because there is no connexion'
+
+    def _write_packet(self,packet):
+        if self.port:
+            if not self.port.isOpen():
+                pass
+                #sys.exit(1)
+
+            # lets see if a completion message or someting
+            # else waits in the buffer. If yes dump it.
+            if self.port.inWaiting():
+                self.recv_packet("ignored")
+
+            self.port.write(packet)
+            #self.dump(packet,"sent")
+        else:
+            print("message hasn't be send because no serial port is open")
+
 
 class Visca():
 	"""create a visca device object"""
@@ -14,6 +96,7 @@ class Visca():
 		self.serial=serial
 		self.pan_speedy = 0x01
 		self.tilt_speedy = 0x01
+		print "CREATING A VISCA INSTANCE"
 
 	def _send_packet(self,data,recipient=1):
 		"""
@@ -68,12 +151,6 @@ class Visca():
 			return None
 
 
-	def _send_broadcast(self,data):
-		# shortcut
-		return self._send_packet(data,-1)
-
-
-
 	def _i2v(self,value):
 		"""
 		return word as dword in visca format
@@ -88,48 +165,6 @@ class Visca():
 		q=ms&0b1111
 		s=ls&0b1111
 		return chr(p)+chr(q)+chr(r)+chr(s)
-
-
-
-	def _cmd_adress_set(self):
-		"""
-		starts enumerating devices, sends the first adress to use on the bus
-		reply is the same packet with the next free adress to use
-		"""
-
-		#address of first device. should be 1:
-		first=1
-
-		reply = self._send_broadcast('\x30'+chr(first)) # set address
-
-		if not reply:
-			print "No reply from the bus."
-			#sys.exit(1)
-
-		if len(reply)!=4 or reply[-1:]!='\xff':
-			print "ERROR enumerating devices"
-			#sys.exit(1)
-		if reply[0] != '\x88':
-			print "ERROR: expecting broadcast answer to an enumeration request"
-			#sys.exit(1)
-		address = ord(reply[2])
-
-		d=address-first
-		print "found %i devices on the bus" % d
-
-		if d==0:
-			#sys.exit(1)
-			pass
-		return reply
-
-
-	def _if_clear(self):
-		reply=self._send_broadcast( '\x01\x00\x01') # interface clear all
-		if not reply[1:]=='\x01\x00\x01\xff':
-			print "ERROR clearing all interfaces on the bus!"
-			sys.exit(1)
-		if debug:print "all interfaces clear"
-		return reply
 
 
 	def _cmd_cam(self,subcmd,device=1):
@@ -576,3 +611,111 @@ class Visca():
 		if debug :print 'function from viscalib triggered','reset'
 		subcmd='\x05'
 		return self._cmd_pt(subcmd)
+
+# The following functions are used for broadcast. It will be nice to have a better orgnaisation, maybe a class Visca_Init?
+def _send_broadcast(data,serial=None):
+	# shortcut
+	return _send_packet(data,-1,serial)
+
+def _if_clear(serial):
+	reply=_send_broadcast( '\x01\x00\x01',serial) # interface clear all
+	if not reply[1:]=='\x01\x00\x01\xff':
+		print "ERROR clearing all interfaces on the bus!"
+		sys.exit(1)
+	if debug:print "all interfaces clear"
+	return reply
+
+def _send_packet(data,recipient=1,serial=None):
+	"""
+	according to the documentation:
+
+	|------packet (3-16 bytes)---------|
+
+	 header     message      terminator
+	 (1 byte)  (1-14 bytes)  (1 byte)
+
+	| X | X . . . . .  . . . . . X | X |
+
+	header:                  terminator:
+	1 s2 s1 s0 0 r2 r1 r0     0xff
+
+	with r,s = recipient, sender msb first
+
+	for broadcast the header is 0x88!
+
+	we use -1 as recipient to send a broadcast!
+
+	"""
+	# we are the controller with id=0
+	sender = 0
+	if recipient==-1:
+		#broadcast:
+		rbits=0x8
+	else:
+		# the recipient (address = 3 bits)
+		rbits=recipient & 0b111
+
+	sbits=(sender & 0b111)<<4
+
+	header=0b10000000 | sbits | rbits
+
+	terminator=0xff
+
+	packet = chr(header)+data+chr(terminator)
+
+	serial.mutex.acquire()
+
+	serial._write_packet(packet)
+	reply = serial.recv_packet()
+	if reply:
+		if reply[-1:] != '\xff':
+			if debug:print "received packet not terminated correctly: %s" % reply.encode('hex')
+			reply=None
+		serial.mutex.release()
+
+		return reply
+	else:
+		return None
+
+
+def _cmd_adress_set(serial):
+	"""
+	starts enumerating devices, sends the first adress to use on the bus
+	reply is the same packet with the next free adress to use
+	"""
+
+	#address of first device. should be 1:
+	first=1
+
+	reply = _send_broadcast('\x30'+chr(first),serial) # set address
+
+	if not reply :
+		print "No reply from the bus."
+		sys.exit(1)
+
+	if type(reply) == None:
+		print "No reply from the bus."
+		sys.exit(1)
+
+	if len(reply)!=4 or reply[-1:]!='\xff':
+		print "ERROR enumerating devices"
+		sys.exit(1)
+
+	if reply[0] != '\x88':
+		print "ERROR: expecting broadcast answer to an enumeration request"
+		sys.exit(1)
+	address = ord(reply[2])
+
+	d=address-first
+	if d==0:
+		sys.exit(1)
+		pass
+	else:
+		print "found %i devices on the bus" % d
+		z = 1
+		viscams = []
+		while z <= d:
+			viscams.append('v'+`z`)
+			z = z + 1
+		return viscams
+
