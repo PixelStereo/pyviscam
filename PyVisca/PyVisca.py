@@ -171,13 +171,13 @@ class Visca():
 		packet='\x01\x04'+subcmd
 		reply = self._send_packet(packet)
 		if reply == '\x90'+'\x41'+'\xFF':
-			print reply.encode('hex') , 'ACK __ buffer 1-------------------'
+			print reply.encode('hex') , '####### ACK __ buffer 1-------------------'
 			reply = self.serial.recv_packet()
 			if reply == '\x90'+'\x51'+'\xFF':
-				print reply.encode('hex') , 'COMPLETION __ buffer 1-------------------'
+				print reply.encode('hex') , '####### COMPLETION __ buffer 1-------------------'
 				return reply
 		elif reply == '\x90'+'\x42'+'\xFF':
-			print reply.encode('hex') , 'ACK __ buffer 2-------------------'
+			print reply.encode('hex') , '####### ACK __ buffer 2-------------------'
 			reply = self.serial.recv_packet()
 			if reply == '\x90'+'\x60'+'\x02'+'\xFF':
 				print reply.encode('hex') , '####### Syntax Error-------------------'
@@ -220,7 +220,7 @@ class Visca():
 			print reply.encode('hex') , '####### Command Buffer Full-------------------'
 			self._come_back(query)
 		elif reply == '\x90'+'\x50'+'\x02'+'\xFF':
-			print reply.encode('hex') , 'Completion to query-------------------'
+			print reply.encode('hex') , '####### Completion to query-------------------'
 			reply = self.serial.recv_packet()
 			return reply
 		elif reply == '\x90'+'\x60'+'\x02'+'\xFF':
