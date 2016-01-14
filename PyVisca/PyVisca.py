@@ -221,7 +221,6 @@ class Visca():
 			self._come_back(query)
 		elif reply == '\x90'+'\x50'+'\x02'+'\xFF':
 			print reply.encode('hex') , '####### Completion to query-------------------'
-			reply = self.serial.recv_packet()
 			return reply
 		elif reply == '\x90'+'\x60'+'\x02'+'\xFF':
 			print reply.encode('hex') , '####### Syntax Error to query-------------------'
@@ -256,12 +255,13 @@ class Visca():
 		reply = self._come_back(query)
 		print '---REPLY FROM THE CAMERA---',function, reply.encode('hex'),type(reply.encode('hex')),'----'
 		if reply:
-			header=ord(packet[0])
-			term=ord(packet[-1:])
-			qq=ord(packet[1])
-			sender = (header&0b01110000)>>4
-			broadcast = (header&0b1000)>>3
-			recipient = (header&0b0111)
+			#packet = reply
+			#header=ord(packet[0])
+			#term=ord(packet[-1:])
+			#qq=ord(packet[1])
+			#sender = (header&0b01110000)>>4
+			#broadcast = (header&0b1000)>>3
+			#recipient = (header&0b0111)
 			reply=reply[2:-1].encode('hex')
 			if len(reply)>3 and ((qq & 0b11110000)>>4)==5:
 				socketno = (qq & 0b1111)
@@ -276,14 +276,15 @@ class Visca():
 					return L
 			if len(reply) > 2:
 				reply = hex_unpack(reply,[])
-			elif reply == None:
-				reply = None
 			elif not type(reply):
 				reply = None
 			elif type(reply) == hex:
 				reply = int(reply,16)
+			elif type(reply) == str:
+				reply = int(reply,16)
 			else:
 				reply = None
+			reply = int(reply)
 			if function == 'focus_mode' or function == 'power':
 				if reply == 2:
 					reply=True
