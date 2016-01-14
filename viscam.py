@@ -41,8 +41,9 @@ if len(viscams) > 3:
 
 
 print
-print 'try to query power parameter'
-print 'hh',v1._query('power') 
+print 'POWER :' , v1._query('power') 
+print 'ZOOM :' , v1._query('zoom') 
+print 'FOCUS :' , v1._query('focus') 
 
 """
 

@@ -5,7 +5,7 @@ import serial
 from thread import allocate_lock
 import glob
 
-debug=True
+debug=False
 
 class Serial(object):
     def __init__(self):
@@ -171,22 +171,22 @@ class Visca():
 		packet='\x01\x04'+subcmd
 		reply = self._send_packet(packet)
 		if reply == '\x90'+'\x41'+'\xFF':
-			print reply.encode('hex') , '####### ACK __ buffer 1-------------------'
+			if debug : print reply.encode('hex') , '####### ACK __ buffer 1-------------------'
 			reply = self.serial.recv_packet()
 			if reply == '\x90'+'\x51'+'\xFF':
-				print reply.encode('hex') , '####### COMPLETION __ buffer 1-------------------'
+				if debug : print reply.encode('hex') , '####### COMPLETION __ buffer 1-------------------'
 				return reply
 		elif reply == '\x90'+'\x42'+'\xFF':
-			print reply.encode('hex') , '####### ACK __ buffer 2-------------------'
+			if debug : print reply.encode('hex') , '####### ACK __ buffer 2-------------------'
 			reply = self.serial.recv_packet()
 			if reply == '\x90'+'\x60'+'\x02'+'\xFF':
-				print reply.encode('hex') , '####### Syntax Error-------------------'
+				if debug : print reply.encode('hex') , '####### Syntax Error-------------------'
 				return reply
 		elif reply == '\x90'+'\x61'+'\x41'+'\xFF':
-			print reply.encode('hex') , '####### NOT IN THIS MODE   -------------------'
+			if debug : print reply.encode('hex') , '####### NOT IN THIS MODE   -------------------'
 			return 'ERROR'
 		elif reply == '\x90'+'\x62'+'\x41'+'\xFF':
-			print reply.encode('hex') , '####### NOT IN THIS MODE   -------------------'
+			if debug : print reply.encode('hex') , '####### NOT IN THIS MODE   -------------------'
 			return 'ERROR'
 		
 	def _memory(self,func,num):
@@ -217,17 +217,17 @@ class Visca():
 		reply = self._send_packet(query)
 		#reply = reply.encode('hex')
 		if reply == '\x90'+'\x60'+'\x03'+'\xFF':
-			print reply.encode('hex') , '####### Command Buffer Full-------------------'
+			if debug : print reply.encode('hex') , '####### Command Buffer Full-------------------'
 			self._come_back(query)
-		elif reply == '\x90'+'\x50'+'\x02'+'\xFF':
-			print reply.encode('hex') , '####### Completion to query-------------------'
+		elif reply.startswith('\x90'+'\x50'):
+			if debug : print reply.encode('hex') , '####### Completion to query-------------------'
 			return reply
 		elif reply == '\x90'+'\x60'+'\x02'+'\xFF':
-			print reply.encode('hex') , '####### Syntax Error to query-------------------'
+			if debug : print reply.encode('hex') , '####### Syntax Error to query-------------------'
 			return
 
 	def _query(self,function):
-		if debug :print 'function from viscalib triggered','QUERY',function
+		if debug :print 'function from viscalib triggered QUERY',function
 		if function == 'zoom':
 			subcmd="\x04"+"\x47"
 		elif function == 'focus':
@@ -253,7 +253,7 @@ class Visca():
 		# make the packet with the dedicated query
 		query='\x09'+subcmd
 		reply = self._come_back(query)
-		print '---REPLY FROM THE CAMERA---',function, reply.encode('hex'),type(reply.encode('hex')),'----'
+		if debug : print '---REPLY FROM THE CAMERA---',function, reply.encode('hex'),type(reply.encode('hex')),'----'
 		if reply:
 			#packet = reply
 			#header=ord(packet[0])
@@ -263,10 +263,10 @@ class Visca():
 			#broadcast = (header&0b1000)>>3
 			#recipient = (header&0b0111)
 			reply=reply[2:-1].encode('hex')
-			if len(reply)>3 and ((qq & 0b11110000)>>4)==5:
-				socketno = (qq & 0b1111)
-			elif len(reply)==3 and ((qq & 0b11110000)>>4)==5:
-				socketno = (qq & 0b1111)
+#			if len(reply)>3 and ((qq & 0b11110000)>>4)==5:
+#				socketno = (qq & 0b1111)
+#			elif len(reply)==3 and ((qq & 0b11110000)>>4)==5:
+#				socketno = (qq & 0b1111)
 			def hex_unpack(zoom,L,size=2):
 				part = zoom[:size]
 				zoom=zoom[size:]
@@ -284,7 +284,6 @@ class Visca():
 				reply = int(reply,16)
 			else:
 				reply = None
-			reply = int(reply)
 			if function == 'focus_mode' or function == 'power':
 				if reply == 2:
 					reply=True
