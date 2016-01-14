@@ -158,6 +158,8 @@ class Visca():
 		so for numbers the first nibble is 0000
 		and 0xfd gets encoded into 0x0f 0x0xd
 		"""
+		if type(value) == unicode:
+			value = int(value)
 		ms = (value &  0b1111111100000000) >> 8
 		ls = (value &  0b0000000011111111)
 		p=(ms&0b11110000)>>4
@@ -250,6 +252,10 @@ class Visca():
 			subcmd="\x04"+"\x42"
 		elif function == 'power':
 			subcmd="\x04"+"\x00"
+		elif function == 'IR':
+			subcmd="\x04"+"\x01"
+		elif function == 'display':
+			subcmd="\x04"+"\x7E"+"\x01"+"\x18"
 		# make the packet with the dedicated query
 		query='\x09'+subcmd
 		reply = self._come_back(query)
@@ -284,19 +290,19 @@ class Visca():
 				reply = int(reply,16)
 			else:
 				reply = None
-			if function == 'focus_mode' or function == 'power':
+			if function == 'focus_mode' or function == 'power' or function == 'IR':
 				if reply == 2:
 					reply=True
 				elif reply == 3:
 					reply = False
 			elif function == 'AE':
-				if reply == '\x00':
+				if reply == 0:
 					reply = 'auto'
-				if reply == '\x03':
+				if reply == 3:
 					reply = 'manual'
-				if reply == '\x10':
+				if reply == 10:
 					reply = 'shutter'
-				if reply == '\x11':
+				if reply == 11:
 					reply = 'iris'
 			elif function == 'pan_tilt':
 				a=int(reply[7],16)
@@ -551,6 +557,16 @@ class Visca():
 			subcmd='\x05'
 		subcmd = prefix+subcmd
 		return self._cmd_cam(subcmd)
+
+	def pan(self,pan):
+		if debug :print 'function from viscalib triggered','pan',pan
+		pan=self._i2v(pan)
+		subcmd='\x02'+chr(self.pan_speedy)+chr(self.tilt_speedy)+pan+chr(0)
+
+	def tilt(self,tilt):
+		if debug :print 'function from viscalib triggered','tilt',tilt
+		tilt=self._i2v(tilt)
+		subcmd='\x02'+chr(self.pan_speedy)+chr(self.tilt_speedy)+tilt+chr(0)
 
 	def pan_tilt(self,pan,tilt):
 		if debug :print 'function from viscalib triggered','pan_tilt',pan,tilt

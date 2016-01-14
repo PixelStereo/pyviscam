@@ -44,6 +44,10 @@ print
 print 'POWER :' , v1._query('power') 
 print 'ZOOM :' , v1._query('zoom') 
 print 'FOCUS :' , v1._query('focus') 
+print 'IRIS :' , v1._query('iris') 
+print 'IRIS :' , v1._query('AE') 
+print 'IR :' , v1._query('IR') 
+print 'DISPLAY :' , v1._query('display') 
 
 """
 
