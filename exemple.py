@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from time import sleep
-#from PyDeviceManager.devicemanager import Serial as serial
-from PyVisca.PyVisca import _cmd_adress_set , Visca , _if_clear
-from PyVisca.PyVisca import Serial as serial
+from PyVisca import _cmd_adress_set , Visca , _if_clear
+from PyVisca import Serial as serial
 
 debug = True
 
