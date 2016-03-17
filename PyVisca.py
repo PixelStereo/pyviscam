@@ -5,7 +5,7 @@ import serial
 from thread import allocate_lock
 import glob
 
-debug=False
+debug = True
 
 class Serial(object):
     def __init__(self):
@@ -89,7 +89,7 @@ class Serial(object):
             print("message hasn't be send because no serial port is open")
 
 
-class Visca():
+class Visca(object):
 	"""create a visca device object"""
 	def __init__(self,serial=None):
 		"""the constructor"""
@@ -190,16 +190,6 @@ class Visca():
 		elif reply == '\x90'+'\x62'+'\x41'+'\xFF':
 			if debug : print reply.encode('hex') , '####### NOT IN THIS MODE   -------------------'
 			return 'ERROR'
-		
-	def _memory(self,func,num):
-		if debug :print 'function from viscalib triggered','memory',func,num
-		if num>5:
-			num=5
-		if func<0 or func>2:
-			return
-		if debug:print "memory"
-		subcmd="\x3f"+chr(func)+chr( 0b0111 & num)
-		return self._cmd_cam(subcmd)
 		
 	def _cmd_pt(self,subcmd,device=1):
 		packet='\x01\x06'+subcmd
@@ -334,32 +324,64 @@ class Visca():
 	#FIXME: IR_Receive_Return
 	#FIXME: Pan-tiltLimitSet
 
-	def power(self,state):
-		""" set the power on or off (boolean) """
-		if debug :print 'function from viscalib triggered','power',state
+	# ----------------------------------------------------
+	# ---------------------- POWER -----------------------
+	# ----------------------------------------------------
+	@property
+	def power(self):
+		"""
+		Return the state of the power
+		"""
+		return self._query('power')
+
+	@power.setter
+	def power(self, state):
+		"""
+		Set the power on or off (boolean)
+		"""
+		if debug:
+			print('power', state)
 		if state:
 			subcmd='\x00\x02'
 		else:
 			subcmd='\x00\x03'
 		return self._cmd_cam(subcmd)
 
-	def power_auto(self,time=0):
-		""" time = minutes without command until standby
+	@property
+	def power_auto(self):
+		"""
+		Return the state of the power_auto param
+		"""
+		return self._query('power_auto')
+
+	@power.setter
+	def power_auto(self, time):
+		"""
+		time = minutes without command until standby
 		0: disable
-		0xffff: 65535 minutes
+		0xffff: 65535 minutes (approximatly 45 days)
 		"""
 		subcmd='\x40'+self._i2v(time)
-		if debug :print 'function from viscalib triggered','power_auto',time
+		if debug:
+			print('power_auto',time)
 		return self._cmd_cam(subcmd)
 
+	# ----------- AE -------------
+	@property
+	def AE(self):
+		return self._query('AE')
+
+	@AE.setter
 	def AE(self,mode):
-		""" define exposure mode
+		"""
+		define exposure mode :
 		auto
 		shutter
 		manual
 		iris
 		"""
-		if debug :print 'function from viscalib triggered','AE',mode
+		if debug:
+			print('AE',mode)
 		if mode == 'auto':
 			subcmd="\x39\x00"
 		elif mode == 'shutter':
@@ -370,35 +392,75 @@ class Visca():
 			subcmd="\x39\x0B"
 		return self._cmd_cam(subcmd)
 
+	# ----------- VIDEO -------------
+	@property
+	def video(self):
+		"""
+		Return the state of the video (resolution + frequency)
+		720:50
+		"""
+		return self._query('video')
+
+	@video.setter
 	def video(self, res, freq):
 		if debug:
-			print 'function from viscalib triggered', 'video', str(res) + str(freq)
+			print('video', str(res) + str(freq))
 		if res == 720:
 			if freq == 50:
 				subcmd = '\x35\x00\x09'
 		prefix = '\x01\x06'
 		return self._cmd_cam(subcmd, prefix)
 	
+	# ----------- SHUTTER -------------
+	@property
+	def shutter(self):
+	    return self._query('shutter')
+	
+	@shutter.setter
 	def shutter(self,value):
 		if debug :print 'function from viscalib triggered', 'shutter', value
 		subcmd='\x4A'+self._i2v(value)
 		return self._cmd_cam(subcmd)
 	
+	# ----------- IRIS -------------
+	@property
+	def iris(self):
+	    return self._query('iris')
+	
+	@iris.setter
 	def iris(self,value):
 		if debug :print 'function from viscalib triggered','iris',value
 		subcmd='\x4B'+self._i2v(value)
 		return self._cmd_cam(subcmd)
 	
+	# ----------- GAIN -------------
+	@property
+	def gain(self):
+	    return self._query('gain')
+	
+	@gain.setter
 	def gain(self,value):
 		if debug :print 'function from viscalib triggered','gain',value
 		subcmd='\x4C'+self._i2v(value)
 		return self._cmd_cam(subcmd)
 	
+	# ----------- APERTURE -------------
+	@property
+	def aperture(self):
+	    return self._query('aperture')
+
+	@aperture.setter
 	def aperture(self,value):
 		if debug :print 'function from viscalib triggered','aperture',value
 		subcmd='\x42'+self._i2v(value)
 		return self._cmd_cam(subcmd)
 	
+	# ----------- SLOW SHUTTER -------------
+	@property
+	def slowshutter(self):
+	    return self._query('slowshutter')
+	
+	@slowshutter.setter
 	def slowshutter(self,mode):
 		if debug :print 'function from viscalib triggered','slowshutter',mode
 		if mode == 'auto':
@@ -407,6 +469,14 @@ class Visca():
 			subcmd="\x5A\x03"
 		return self._cmd_cam(subcmd)		
 	
+	# ----------------------------------------------------
+	# ---------------------- ZOOM ------------------------
+	# ----------------------------------------------------
+	@property
+	def zoom_stop(self):
+	    return self._query('zoom_stop')
+	
+	@zoom_stop.setter
 	def zoom_stop(self):
 		if debug :print 'function from viscalib triggered','zoom_stop'
 		subcmd="\x07\x00"
@@ -458,11 +528,15 @@ class Visca():
 			subcmd="\x06\x03"
 		return self._cmd_cam(subcmd)
 	
+	# ----------------------------------------------------
+	# ---------------------- FOCUS -----------------------
+	# ----------------------------------------------------
 	def focus_nearlimit(self,value):
 		if debug :print 'function from viscalib triggered','focus_nearlimit',value
 		subcmd="\x28"+self._i2v(value)
 		return self._cmd_cam(subcmd)
 
+	# ----------- FOCUS MODE -------------
 	def focus_mode(self,mode):
 		if debug :print 'function from viscalib triggered','focus_mode',mode
 		if mode == 'auto':
@@ -470,21 +544,25 @@ class Visca():
 		elif mode == 'manual':
 			return self._cmd_cam("\x38\x03")
 	
+	# ----------- FOCUS STOP -------------
 	def focus_stop(self):
 		if debug :print 'function from viscalib triggered','focus_stop'
 		subcmd="\x08\x00"
 		return self._cmd_cam(subcmd)
 	
+	# ----------- FOCUS NEAR -------------
 	def focus_near(self):
 		if debug :print 'function from viscalib triggered','focus_near'
 		subcmd="\x08\x02"
 		return self._cmd_cam(subcmd)
 
+	# ----------- FOCUS FAR -------------
 	def focus_far(self):
 		if debug :print 'function from viscalib triggered','focus_far'
 		subcmd="\x08\x03"
 		return self._cmd_cam(subcmd)
 	
+	# ----------- FOCUS NEAR SPEED -------------
 	def focus_near_speed(self,value):
 		"""
 		focus in with speed = 0..7
@@ -494,6 +572,7 @@ class Visca():
 		subcmd="\x08"+chr(sbyte)
 		return self._cmd_cam(subcmd)
 	
+	# ----------- FOCUS FAR SPEED -------------
 	def focus_far_speed(self,value):
 		"""
 		focus in with speed = 0..7
@@ -503,6 +582,7 @@ class Visca():
 		subcmd="\x08"+chr(sbyte)
 		return self._cmd_cam(subcmd)
 
+	# ----------- FOCUS DIRECT -------------
 	def focus_direct(self,value):
 		"""
 		focus to value
@@ -513,6 +593,7 @@ class Visca():
 		subcmd="\x48"+self._i2v(value)
 		return self._cmd_cam(subcmd)
 	
+	# ----------- FOCUS IR -------------
 	def IR(self,state):
 		if debug :print 'function from viscalib triggered','IR',state
 		if state:
@@ -521,6 +602,7 @@ class Visca():
 			subcmd="\x01"+"\x03"
 		return self._cmd_cam(subcmd)
 	
+	# ----------- FOCUS FX -------------
 	def FX(self,mode):
 		if debug :print 'function from viscalib triggered','FX',mode
 		if mode == 'normal':
@@ -531,6 +613,17 @@ class Visca():
 			subcmd="\x63"+"\x04"
 		return self._cmd_cam(subcmd)
 
+	# ----------- MEMORY -------------
+	def _memory(self,func,num):
+		if debug :print 'function from viscalib triggered','memory',func,num
+		if num>5:
+			num=5
+		if func<0 or func>2:
+			return
+		if debug:print "memory"
+		subcmd="\x3f"+chr(func)+chr( 0b0111 & num)
+		return self._cmd_cam(subcmd)
+
 	def memory_reset(self,num):
 		return self._memory(0x00,num)
 	
@@ -539,7 +632,8 @@ class Visca():
 
 	def memory_recall(self,num):
 		return self._memory(0x02,num)
-	
+
+	# ----------- noOSD -------------
 	def noOSD(self):
 		""" Datascreen control """
 		if debug :print 'function from viscalib triggered','noOSD'
@@ -547,6 +641,7 @@ class Visca():
 		self.info_display(False)
 		return self._send_packet(subcmd)
 
+	# ----------- INFO DISPLAY-------------
 	def info_display(self,state):
 		if debug :print 'function from viscalib triggered','info_display',state
 		if state:
@@ -555,6 +650,7 @@ class Visca():
 			packet = '\x01\x7E\x01\x18\x03'
 		return self._send_packet(packet)
 	
+	# ----------- WHITE BALANCE -------------
 	def WB(self,mode):
 		if debug :print 'function from viscalib triggered','WB',mode
 		prefix = '\x35'
@@ -571,75 +667,92 @@ class Visca():
 		subcmd = prefix+subcmd
 		return self._cmd_cam(subcmd)
 
+	# ----------- PAN -------------
 	def pan(self,pan):
 		if debug :print 'function from viscalib triggered','pan',pan
 		pan=self._i2v(pan)
 		subcmd='\x02'+chr(self.pan_speedy)+chr(self.tilt_speedy)+pan+chr(0)
 
+	# ----------- TILT -------------
 	def tilt(self,tilt):
 		if debug :print 'function from viscalib triggered','tilt',tilt
 		tilt=self._i2v(tilt)
 		subcmd='\x02'+chr(self.pan_speedy)+chr(self.tilt_speedy)+tilt+chr(0)
 
+	# ----------- PAN TILT -------------
 	def pan_tilt(self,pan,tilt):
 		if debug :print 'function from viscalib triggered','pan_tilt',pan,tilt
 		pan=self._i2v(pan)
 		tilt=self._i2v(tilt)
 		subcmd='\x02'+chr(self.pan_speedy)+chr(self.tilt_speedy)+pan+tilt
 
+	# ----------- PAN SPEED -------------
 	def pan_speed(self,pan_speed):
 		if debug :print 'function from viscalib triggered','pan_speed',pan_speed
 		self.pan_speedy = pan_speed
 
+	# ----------- TILT SPEED -------------
 	def tilt_speed(self,tilt_speed):
 		if debug :print 'function from viscalib triggered','tilt_speed',tilt_speed
 		self.tilt_speedy = tilt_speed
 	
+	# ----------- UP -------------
 	def up(self):
 		if debug :print 'function from viscalib triggered','up'
 		return self._cmd_ptd(0x03,0x01)
 
+	# ----------- DOWN -------------
 	def down(self):
 		if debug :print 'function from viscalib triggered','down'
 		return self._cmd_ptd(0x03,0x02)
 	
+	# ----------- LEFT -------------
 	def left(self):
 		if debug :print 'function from viscalib triggered','left'
 		return self._cmd_ptd(0x01,0x03)
 	
+	# ----------- RIGHT -------------
 	def right(self):
 		if debug :print 'function from viscalib triggered','right'
 		return self._cmd_ptd(0x02,0x03)
 	
+	# ----------- UPLEFT -------------
 	def upleft(self):
 		if debug :print 'function from viscalib triggered','upleft'
 		return self._cmd_ptd(0x01,0x01)
 
+	# ----------- UPRIGHT-------------
 	def upright(self):
 		if debug :print 'function from viscalib triggered','upright'
 		return self._cmd_ptd(0x02,0x01)
 	
+	# ----------- DOWNLEFT -------------
 	def downleft(self):
 		if debug :print 'function from viscalib triggered','downleft'
 		return self._cmd_ptd(0x01,0x02)
 	
+	# ----------- DOWNRIGHT -------------
 	def downright(self):
 		if debug :print 'function from viscalib triggered','downright'
 		return self._cmd_ptd(0x02,0x02)
 
+	# ----------- STOP -------------
 	def stop(self):
 		if debug :print 'function from viscalib triggered','stop'
 		return self._cmd_ptd(0x03,0x03)
 	
+	# ----------- HOME -------------
 	def home(self):
 		if debug :print 'function from viscalib triggered','home'
 		subcmd='\x04'
 		return self._cmd_pt(subcmd)
 	
+	# ----------- RESET -------------
 	def reset(self):
 		if debug :print 'function from viscalib triggered','reset'
 		subcmd='\x05'
 		return self._cmd_pt(subcmd)
+
 
 # The following functions are used for broadcast. It will be nice to have a better orgnaisation, maybe a class Visca_Init?
 def _send_broadcast(data,serial=None):
