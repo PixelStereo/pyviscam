@@ -169,8 +169,8 @@ class Visca():
 		return chr(p)+chr(q)+chr(r)+chr(s)
 
 
-	def _cmd_cam(self,subcmd,device=1):
-		packet='\x01\x04'+subcmd
+	def _cmd_cam(self, subcmd, prefix='\x01\x04'):
+		packet = prefix + subcmd
 		reply = self._send_packet(packet)
 		if reply == '\x90'+'\x41'+'\xFF':
 			if debug : print reply.encode('hex') , '####### ACK __ buffer 1-------------------'
@@ -256,6 +256,8 @@ class Visca():
 			subcmd="\x04"+"\x01"
 		elif function == 'display':
 			subcmd="\x04"+"\x7E"+"\x01"+"\x18"
+		elif function == 'video':
+			subcmd="\x06"+"\x23"+"\xFF"
 		# make the packet with the dedicated query
 		query='\x09'+subcmd
 		reply = self._come_back(query)
@@ -295,6 +297,8 @@ class Visca():
 					reply=True
 				elif reply == 3:
 					reply = False
+			elif function == 'video':
+				print '--------', reply
 			elif function == 'AE':
 				if reply == 0:
 					reply = 'auto'
@@ -365,9 +369,18 @@ class Visca():
 		elif mode == 'iris':
 			subcmd="\x39\x0B"
 		return self._cmd_cam(subcmd)
+
+	def video(self, res, freq):
+		if debug:
+			print 'function from viscalib triggered', 'video', str(res) + str(freq)
+		if res == 720:
+			if freq == 50:
+				subcmd = '\x35\x00\x09'
+		prefix = '\x01\x06'
+		return self._cmd_cam(subcmd, prefix)
 	
 	def shutter(self,value):
-		if debug :print 'function from viscalib triggered','shutter',value
+		if debug :print 'function from viscalib triggered', 'shutter', value
 		subcmd='\x4A'+self._i2v(value)
 		return self._cmd_cam(subcmd)
 	
@@ -519,13 +532,13 @@ class Visca():
 		return self._cmd_cam(subcmd)
 
 	def memory_reset(self,num):
-		return self.memory(0x00,num)
+		return self._memory(0x00,num)
 	
 	def memory_set(self,num):
-		return self.memory(0x01,num)
+		return self._memory(0x01,num)
 
 	def memory_recall(self,num):
-		return self.memory(0x02,num)
+		return self._memory(0x02,num)
 	
 	def noOSD(self):
 		""" Datascreen control """
