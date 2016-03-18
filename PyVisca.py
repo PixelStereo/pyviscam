@@ -11,7 +11,7 @@ except:
 	# python 3
 	from _thread import allocate_lock
 
-debug = True
+debug = 1
 
 
 class Serial(object):
@@ -109,11 +109,13 @@ class Viscam(object):
 		# make it available from everywhere
 		self.serial = serial
 		self.port = port
-		print serial
 		if port:
 			self.reset(port)
 		else:
 			print("please make a simulation in case you don't have a serial port with a visca camera available")
+
+	def get_instances(self):
+		return self.viscams
 
 	def reset(self, port):
 		"""
@@ -121,33 +123,27 @@ class Viscam(object):
 		Notice that it release and re-create Visca objects
 		"""
 		# if there is a port, open it
-		serial.open(port)
+		self.serial.open(port)
 		# Give me the list of available cameras
-		self._cmd_adress_set(serial)
+		self.viscams = self._cmd_adress_set()
 		# Clear the buffers from any packet stuck anywhere
-		self._if_clear(serial)
-		# Turn off digital zoom aka zoom_digital(False)
-		v.zoom_digital(False).encode('hex')
-		# Turn off datascreen display
-		v.noOSD().encode('hex')
-        viscams = self._cmd_adress_set(serial)
-        print self._if_clear(serial)
-        for v in viscams:
-            v = Visca(serial)
+		self._if_clear()
 
-	def _send_broadcast(self, data, serial):
+	def _send_broadcast(self, data):
 		# shortcut to broadcast commands
-		return _send_packet(data, -1, serial)
+		return self._send_packet(data, -1)
 
-	def _cmd_adress_set(self, serial):
+	def _cmd_adress_set(self):
 		"""
 		starts enumerating devices, sends the first adress to use on the bus
 		reply is the same packet with the next free adress to use
+
+		Create Visca Instances for each device found on the serial bus
 		"""
 		#address of first device. should be 1:
 		first=1
 
-		reply = _send_broadcast('\x30'+chr(first),serial) # set address
+		reply = self._send_broadcast('\x30'+chr(first)) # set address
 
 		if not reply or type(reply) == None:
 			if debug:
@@ -166,23 +162,29 @@ class Viscam(object):
 		d=address-first
 		if d==0:
 			if debug:
-				print('unexpected ERROR')
+				print('unexpected ERROR, someone reply, but no Camera found')
 			sys.exit(1)
 		else:
 			print("found %i devices on the bus" % d)
 			z = 1
 			viscams = []
 			while z <= d:
-				viscams.append('v'+'z')
 				z = z + 1
+	        	v = Visca(self.serial)
+	        	viscams.append(v)
+	        	# Turn off digital zoom aka zoom_digital
+	        	v.zoom_digital = False
+	        	# Turn off datascreen display
+	        	v.menu_off()
+	        	v.info_display = False
 			return viscams
 
-	def _if_clear(self, serial):
+	def _if_clear(self):
 		"""
 		clear the interfaces on the bys
 		"""
 		# interface clear all
-		reply = _send_broadcast('\x01\x00\x01', serial) 
+		reply = self._send_broadcast('\x01\x00\x01') 
 		if not reply[1:] == '\x01\x00\x01\xff':
 			print("ERROR clearing all interfaces on the bus!")
 			sys.exit(1)
@@ -190,7 +192,7 @@ class Viscam(object):
 			print("all interfaces clear")
 		return reply
 
-	def _send_packet(self, data,recipient=1,serial=None):
+	def _send_packet(self, data, recipient=1):
 		"""
 		according to the documentation:
 
@@ -223,15 +225,15 @@ class Viscam(object):
 		header=0b10000000 | sbits | rbits
 		terminator=0xff
 		packet = chr(header)+data+chr(terminator)
-		serial.mutex.acquire()
-		serial._write_packet(packet)
-		reply = serial.recv_packet()
+		self.serial.mutex.acquire()
+		self.serial._write_packet(packet)
+		reply = self.serial.recv_packet()
 		if reply:
 			if reply[-1:] != '\xff':
 				if debug:
 					print("received packet not terminated correctly: %s" % reply.encode('hex'))
 				reply=None
-			serial.mutex.release()
+			self.serial.mutex.release()
 			return reply
 		else:
 			return None
@@ -246,7 +248,7 @@ class Visca(object):
 		self.tilt_speedy = 0x01
 		print("CREATING A VISCA INSTANCE")
 
-	def _send_packet(self,data,recipient=1):
+	def _send_packet(self, data, recipient=1):
 		"""
 		according to the documentation:
 
@@ -269,12 +271,12 @@ class Visca(object):
 		"""
 		# we are the controller with id=0
 		sender = 0
-		if recipient==-1:
-			#broadcast:
-			rbits=0x8
+		if recipient == -1:
+			# broadcast
+			rbits = 0x8
 		else:
 			# the recipient (address = 3 bits)
-			rbits=recipient & 0b111
+			rbits = recipient & 0b111
 
 		sbits=(sender & 0b111)<<4
 
@@ -322,29 +324,33 @@ class Visca(object):
 		packet = prefix + subcmd
 		reply = self._send_packet(packet)
 		if reply == '\x90'+'\x41'+'\xFF':
-			if debug:
-				print(reply.encode('hex') , '####### ACK __ buffer 1-------------------')
+			if debug == 4:
+				print('-----------ACK 1-------------------')
 			reply = self.serial.recv_packet()
 			if reply == '\x90'+'\x51'+'\xFF':
-				if debug:
-					print(reply.encode('hex') , '####### COMPLETION __ buffer 1-------------------')
-				return reply
+				if debug == 4:
+					print('--------COMPLETION 1---------------')
+				return True
 		elif reply == '\x90'+'\x42'+'\xFF':
-			if debug:
-				print(reply.encode('hex') , '####### ACK __ buffer 2-------------------')
+			if debug == 4:
+				print('-----------ACK 2-------------------')
 			reply = self.serial.recv_packet()
-			if reply == '\x90'+'\x60'+'\x02'+'\xFF':
-				if debug:
-					print(reply.encode('hex') , '####### Syntax Error-------------------')
-				return reply
+			if reply == '\x90'+'\x52'+'\xFF':
+				if debug == 4:
+					print('--------COMPLETION 2---------------')
+				return True
+		elif reply == '\x90'+'\x60'+'\x02'+'\xFF':
+			if debug:
+				print('--------Syntax Error------------')
+			return False
 		elif reply == '\x90'+'\x61'+'\x41'+'\xFF':
 			if debug:
-				print(reply.encode('hex') , '####### NOT IN THIS MODE   -------------------')
-			return 'ERROR'
+				print('-----------ERROR 1------------------')
+			return False
 		elif reply == '\x90'+'\x62'+'\x41'+'\xFF':
 			if debug:
-				print(reply.encode('hex') , '####### NOT IN THIS MODE   -------------------')
-			return 'ERROR'
+				print('-----------ERROR 2------------------')
+			return False
 		
 	def _cmd_pt(self,subcmd,device=1):
 		packet='\x01\x06'+subcmd
@@ -365,20 +371,20 @@ class Visca(object):
 		#reply = reply.encode('hex')
 		if reply == '\x90'+'\x60'+'\x03'+'\xFF':
 			if debug:
-				print(reply.encode('hex') , '####### Command Buffer Full-------------------')
+				print('-------- FULL BUFFER ---------------')
 			self._come_back(query)
 		elif reply.startswith('\x90'+'\x50'):
-			if debug:
-				print(reply.encode('hex') , '####### Completion to query-------------------')
+			if debug == 4:
+				print('-------- QUERY COMPLETION ---------------')
 			return reply
 		elif reply == '\x90'+'\x60'+'\x02'+'\xFF':
 			if debug:
-				print(reply.encode('hex') , '####### Syntax Error to query-------------------')
+				print('-------- QUERY SYNTAX ERROR ---------------')
 			return
 
 	def _query(self,function):
-		if debug:
-			print('function from viscalib triggered QUERY',function)
+		if debug == 4:
+			print('QUERY', function)
 		if function == 'zoom':
 			subcmd = "\x04"+"\x47"
 		elif function == 'focus':
@@ -410,8 +416,9 @@ class Visca(object):
 		# make the packet with the dedicated query
 		query='\x09'+subcmd
 		reply = self._come_back(query)
-		if debug:
-			print('---REPLY FROM THE CAMERA---',function, reply.encode('hex'),type(reply.encode('hex')),'----')
+		if debug == 4:
+			dbg = '{function} is {reply}'
+			print dbg.format(function=function, reply=reply.encode('hex'))
 		if reply:
 			#packet = reply
 			#header=ord(packet[0])
@@ -476,6 +483,9 @@ class Visca(object):
 				c=int(reply[1],16)
 				d=int(reply[0],16)
 				reply = ((((((16*d)+c)*16)+b)*16)+a)
+			if debug:
+				dbg = '{function} is {reply}'
+				print dbg.format(function=function, reply=reply)
 			return reply
 
 	#FIXME: CAM_Bright
@@ -690,19 +700,24 @@ class Visca(object):
 		subcmd = "\x07\x00"
 		return self._cmd_cam(subcmd)
 
-	def zoom_tele(self):
+	def zoom_tele(self, speed=None):
 		"""
 		Zoom in
+		accepts 
 		"""
+		if speed != None:
+			self.zoom_tele_speed = speed
 		if debug:
 			print('zoom_tele')
 		subcmd = "\x07\x02"
 		return self._cmd_cam(subcmd)
 	
-	def zoom_wide(self):
+	def zoom_wide(self, speed=None):
 		"""
 		Zoom Out
 		"""
+		if speed != None:
+			self.zoom_wide_speed = speed
 		if debug:
 			print('zoom_wide')
 		subcmd = "\x07\x03"
@@ -748,9 +763,18 @@ class Visca(object):
 		subcmd = "\x07"+chr(sbyte)
 		return self._cmd_cam(subcmd)
 	
-	def zoom_digital(self,state):
+	@property
+	def zoom_digital(self):
+	    return self._query('zoom_digital')
+		
+
+	@zoom_digital.setter
+	def zoom_digital(self, state):
+		"""
+		Digital zoom ON/OFF
+		"""
 		if debug:
-			print('zoom_digital',state)
+			print('zoom_digital', state)
 		if state:
 			subcmd = "\x06\x02"
 		else:
@@ -803,8 +827,8 @@ class Visca(object):
 		"""
 		if debug:
 			print('focus_near_speed',value)
-		sbyte=0x20+(value&0b111)
-		subcmd = "\x08"+chr(sbyte)
+		sbyte = 0x20 + (value&0b111)
+		subcmd = "\x08" + chr(sbyte)
 		return self._cmd_cam(subcmd)
 	
 	# ----------- FOCUS FAR SPEED -------------
@@ -814,8 +838,8 @@ class Visca(object):
 		"""
 		if debug:
 			print('focus_far_speed',value)
-		sbyte=0x30+(value&0b111)
-		subcmd = "\x08"+chr(sbyte)
+		sbyte = 0x30 + (value&0b111)
+		subcmd = "\x08" + chr(sbyte)
 		return self._cmd_cam(subcmd)
 
 	# ----------- FOCUS DIRECT -------------
@@ -827,7 +851,7 @@ class Visca(object):
 		"""
 		if debug:
 			print('focus_direct',value)
-		subcmd = "\x48"+self._i2v(value)
+		subcmd = "\x48" + self._i2v(value)
 		return self._cmd_cam(subcmd)
 	
 	# ----------- FOCUS IR -------------
@@ -835,9 +859,9 @@ class Visca(object):
 		if debug:
 			print('IR',state)
 		if state:
-			subcmd = "\x01"+"\x02"
+			subcmd = "\x01" + "\x02"
 		else:
-			subcmd = "\x01"+"\x03"
+			subcmd = "\x01" + "\x03"
 		return self._cmd_cam(subcmd)
 	
 	# ----------- FOCUS FX -------------
@@ -845,58 +869,74 @@ class Visca(object):
 		if debug:
 			print('FX',mode)
 		if mode == 'normal':
-			subcmd = "\x63"+"\x00"
+			subcmd = "\x63" + "\x00"
 		if mode == 'negart':
-			subcmd = "\x63"+"\x02"
+			subcmd = "\x63" + "\x02"
 		if mode == 'BW':
-			subcmd = "\x63"+"\x04"
+			subcmd = "\x63" + "\x04"
 		return self._cmd_cam(subcmd)
 
 	# ----------- MEMORY -------------
 	def _memory(self,func,num):
 		if debug:
-			print('memory',func,num)
-		if num>5:
-			num=5
-		if func<0 or func>2:
+			print('memory', func, num)
+		if num > 5:
+			num = 5
+		if func < 0 or func > 2:
 			return
 		if debug:
 			print("memory")
-		subcmd = "\x3f"+chr(func)+chr( 0b0111 & num)
+		subcmd = "\x3f" + chr(func) + chr( 0b0111 & num)
 		return self._cmd_cam(subcmd)
 
-	def memory_reset(self,num):
-		return self._memory(0x00,num)
+	def memory_reset(self, num):
+		return self._memory(0x00, num)
 	
-	def memory_set(self,num):
-		return self._memory(0x01,num)
+	def memory_set(self, num):
+		return self._memory(0x01, num)
 
-	def memory_recall(self,num):
-		return self._memory(0x02,num)
+	def memory_recall(self, num):
+		return self._memory(0x02, num)
 
-	# ----------- noOSD -------------
-	def noOSD(self):
-		""" Datascreen control """
+	# ----------------------------------------------------
+	# ---------------------- OSD -----------------------
+	# ----------------------------------------------------
+
+	# ----------- MENU OFF -------------
+	def menu_off(self):
+		"""
+		Turns off the menu screen
+		"""
 		if debug:
-			print('noOSD')
-		subcmd = '\x01'+'\x06'+'\x06'+'\x03'
-		self.info_display(False)
-		return self._send_packet(subcmd)
+			print('menu_off')
+		subcmd = '\x06' + '\x03'
+		prefix='\x01\x06'
+		return self._cmd_cam(subcmd, prefix)
 
 	# ----------- INFO DISPLAY-------------
-	def info_display(self,state):
+	@property
+	def info_display(self):
+	    return self._query('info_display')
+
+	@info_display.setter
+	def info_display(self, state):
+		"""
+		ON/OFF of the Operation status display
+		of One Push Trigger of CAM_Memory and CAM_WB
+		"""
 		if debug:
-			print('info_display',state)
+			print('info_display', state)
 		if state:
-			packet = '\x01\x7E\x01\x18\x02'
+			subcmd = '\x02'
 		else:
-			packet = '\x01\x7E\x01\x18\x03'
-		return self._send_packet(packet)
+			subcmd = '\x03'
+		prefix = '\x01\x7E\x01\x18'
+		return self._cmd_cam(subcmd, prefix)
 	
 	# ----------- WHITE BALANCE -------------
-	def WB(self,mode):
+	def WB(self, mode):
 		if debug:
-			print('WB',mode)
+			print('WB', mode)
 		prefix = '\x35'
 		if mode == 'auto':
 			subcmd = '\x00'
@@ -908,22 +948,22 @@ class Visca(object):
 			subcmd = '\x03'
 		elif mode == 'manual':
 			subcmd = '\x05'
-		subcmd = prefix+subcmd
+		subcmd = prefix + subcmd
 		return self._cmd_cam(subcmd)
 
 	# ----------- PAN -------------
-	def pan(self,pan):
+	def pan(self, pan):
 		if debug:
-			print('pan',pan)
-		pan=self._i2v(pan)
-		subcmd = '\x02'+chr(self.pan_speedy)+chr(self.tilt_speedy)+pan+chr(0)
+			print('pan', pan)
+		pan = self._i2v(pan)
+		subcmd = '\x02' + chr(self.pan_speedy) + chr(self.tilt_speedy) + pan + chr(0)
 
 	# ----------- TILT -------------
-	def tilt(self,tilt):
+	def tilt(self, tilt):
 		if debug:
-			print('tilt',tilt)
-		tilt=self._i2v(tilt)
-		subcmd = '\x02'+chr(self.pan_speedy)+chr(self.tilt_speedy)+tilt+chr(0)
+			print('tilt', tilt)
+		tilt = self._i2v(tilt)
+		subcmd = '\x02' + chr(self.pan_speedy) + chr(self.tilt_speedy) + tilt + chr(0)
 
 	# ----------- PAN TILT -------------
 	def pan_tilt(self,pan,tilt):
