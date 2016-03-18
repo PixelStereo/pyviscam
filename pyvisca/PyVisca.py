@@ -594,22 +594,22 @@ class Visca(object):
 				else:
 					reply = 'manual'
 			elif function == 'shutter':
-				reply = int(reply[3])
+				reply = int(reply[3], 16)
 				reply = shutter_val.get(reply)
 			elif function == 'iris':
-				reply = int(reply[3])
+				reply = int(reply[3], 16)
 				reply = iris_val.get(reply)
 			elif function == 'gain':
-				reply = int(reply[3])
+				reply = int(reply[3], 16)
 				reply = gain_val.get(reply)
 			elif function == 'gain_limit':
-				reply = int(reply[3])
+				reply = int(reply[3], 16)
 				reply = gain_limit_val.get(reply)
 			elif function == 'bright':
-				reply = int(reply[3])
+				reply = int(reply[3], 16)
 				print('bright feedback need some love')
 			elif function == 'expo_compensation_amount':
-				reply = int(reply[3])
+				reply = int(reply[3], 16)
 				reply = expo_compensation_val.get(reply)
 			elif function == 'NR':
 				reply = reply
@@ -625,11 +625,11 @@ class Visca(object):
 				if reply == 4:
 					reply = 'BW'
 			elif function == 'color_gain':
-				reply = int(reply[3])
+				reply = int(reply[3], 16)
 				reply = ( (reply - 0) / (14 - 0) ) * (200 - 60) + 60
 				reply = str(reply)+'%'
 			elif function == 'color_hue':
-				reply = int(reply[3])
+				reply = int(reply[3], 16)
 				reply = ( (reply - 0) / (14 - 0) ) * (14 - -14) + -14
 				reply = str(reply)+'°'
 			elif function == 'video':
