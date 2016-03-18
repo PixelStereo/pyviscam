@@ -551,9 +551,9 @@ class Visca(object):
 			or function == 'IR_auto' or function == 'HR' or function == 'high_sensitivity' \
 			or function == 'IR_receive':
 				if reply == 2:
-					reply = 'ON'
+					reply = True
 				elif reply == 3:
-					reply = 'OFF'
+					reply = False
 			elif function == 'focus_auto_sensitivity':
 				if reply == 2:
 					reply = 'normal'
@@ -669,7 +669,13 @@ class Visca(object):
 					print("don't understand this reply")
 			if debug:
 				dbg = '{function} is {reply}'
-				print dbg.format(function=function, reply=reply)
+				if reply == True:
+					reply2print = 'ON'
+				elif reply == False:
+					reply2print = 'OFF'
+				else:
+					reply2print = reply
+				print dbg.format(function=function, reply=reply2print)
 			return reply
 
 
