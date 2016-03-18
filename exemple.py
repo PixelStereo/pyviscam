@@ -2,66 +2,42 @@
 # -*- coding: utf-8 -*-
 
 from time import sleep
-from PyVisca import _cmd_adress_set , Visca , _if_clear
-from PyVisca import Serial as serial
+from PyVisca import Viscam
 
-debug = True
-
-if debug : print '-----serial port initialisation-----'
-# create a serial object
-serial = serial()
+print '----- visca bus initialisation -----'
+# create a visca bus object
+cams = Viscam()
 # get a list of serial ports available and select the last one
-port = serial.listports()[-1]
-if debug : print 'serial port opening : ' + port
+ports = cams.serial.listports()
+port = None
+for item in ports:
+	if 'usbserial' in item:
+		port = item
+if not port:
+	port = ports[0]
+print('serial port opening : ' + port)
 # open a connection on the serial object
-serial.open(portname=port)
-# broadcase a address set command
-if debug : print '-----pyvisca module initialisation-----'
-viscams = _cmd_adress_set(serial)
-if debug : print '-----clearing all buffers-----'
-_if_clear(serial)
+cams.reset(port)
 
-# this part is ugly but I don't know how to do. the following commented code does'nt work
-"""for v in viscams:
-	print v
-	v = Visca(serial)"""
-if len(viscams) == 1:
-	v1 = Visca(serial)
-if len(viscams) == 2:
-	v1 = Visca(serial)
-	v2 = Visca(serial)
-if len(viscams) == 3:
-	v1 = Visca(serial)
-	v2 = Visca(serial)
-	v3 = Visca(serial)
-if len(viscams) > 3:
-	print 'only 3 cameras are working for now'
-	sys.exit(1)
+v1 = cams.get_instances()[0]
+
+v1._query('power') 
+v1._query('zoom') 
+v1._query('focus') 
+v1._query('iris') 
+v1._query('AE') 
+v1._query('IR') 
+v1._query('display') 
 
 
-print
-print 'POWER :' , v1._query('power') 
-print 'ZOOM :' , v1._query('zoom') 
-print 'FOCUS :' , v1._query('focus') 
-print 'IRIS :' , v1._query('iris') 
-print 'IRIS :' , v1._query('AE') 
-print 'IR :' , v1._query('IR') 
-print 'DISPLAY :' , v1._query('display') 
 
-"""
-
-print 'power off'
-v1.power(0)
+v1.power = False
 sleep(1)
-print 'power on'
-v1.power(1)
+v1.power = True
 sleep(10)
-print 'left'
 v1.left()
 sleep(4)
-print ('stop')
 v1.stop()
 sleep(0.2)
-print 'home'
 v1.home()
-sleep(10)"""
+sleep(1)
