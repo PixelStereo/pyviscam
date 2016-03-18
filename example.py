@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from time import sleep
-from PyVisca import Viscam
+from pyvisca.PyVisca import Viscam, Visca
 
 print '----- visca bus initialisation -----'
 # create a visca bus object
@@ -18,19 +18,16 @@ if not port:
 print('serial port opening : ' + port)
 # open a connection on the serial object
 cams.reset(port)
-
 v1 = cams.get_instances()[0]
 
-v1._query('power') 
-v1._query('zoom') 
-v1._query('focus') 
-v1._query('iris') 
-v1._query('AE') 
-v1._query('IR') 
-v1._query('display') 
+print('available parameters : ')
+print('-------------------------')
+prop_list = [p for p in dir(Visca) if isinstance(getattr(Visca, p),property)]
+for prop in prop_list:
+	v1._query(prop)
 
 
-
+"""
 v1.power = False
 sleep(1)
 v1.power = True
@@ -40,4 +37,4 @@ sleep(4)
 v1.stop()
 sleep(0.2)
 v1.home()
-sleep(1)
+sleep(1)"""
