@@ -563,19 +563,39 @@ class Visca(object):
 		subcmd = "\x07\x03"
 		return self._cmd_cam(subcmd)
 	
+	@property
+	def zoom_tele_speed(self):
+		"""
+		Returns zoom in speed
+		from 0 to 7
+		"""
+		return self._query('zoom_tele_speed')
+
+	@zoom_tele_speed.setter
 	def zoom_tele_speed(self,speed):
+		"""
+		Set Zoom In speed
+		from 0 to 7
+		"""
 		if debug:
 			print('zoom_tele_speed',speed)
-		"""
-		zoom in with speed = 0..7
-		"""
 		sbyte=0x20+(speed&0b111)
 		subcmd = "\x07"+chr(sbyte)
 		return self._cmd_cam(subcmd)
-	
+
+	@property
+	def zoom_wide_speed(self):
+		"""
+		Returns Zoom Out speed
+		from 0 to 7
+		"""
+		return self._query('zoom_wide_speed')
+
+	@zoom_wide_speed.setter
 	def zoom_wide_speed(self,speed):
 		"""
-		zoom in with speed = 0..7
+		Set Zoom Out speed
+		from 0 to 7
 		"""
 		if debug:
 			print('zoom_wide_speed',speed)
