@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 import sys
 import serial
-from thread import allocate_lock
+try:
+	from thread import allocate_lock
+except:
+	from _thread import allocate_lock
 import glob
 
 debug = True
@@ -951,7 +954,7 @@ def _cmd_adress_set(serial):
 		z = 1
 		viscams = []
 		while z <= d:
-			viscams.append('v'+`z`)
+			viscams.append('v'+'z')
 			z = z + 1
 		return viscams
 
