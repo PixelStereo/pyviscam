@@ -11,6 +11,8 @@ except:
 	# python 3
 	from _thread import allocate_lock
 
+from pan_tilt_utils import degree_to_visca, visca_to_degree
+
 debug = 1
 
 shutter_val = {21:'1/10000', 20:'1/6000', 19:'1/3500', 18:'1/2500', 17:'1/1750', \
@@ -645,12 +647,11 @@ class Visca(object):
 				f=int(reply[2],16)
 				g=int(reply[1],16)
 				h=int(reply[0],16)
-				reply = (((((16*h)+g)*16)+f)*16)+e , (((((16*d)+c)*16)+b)*16)+a
-				# FIXME : PAN = E1E5 (–170 degree) to 1E1B (+170 degree)
-				# FIXME : TILT = FC75 (–20 degree) to 0FF0 (+90 degree) (IMAGE FLIP: OFF) 
-				# FIXME : TILT = F010 (–90 degree) to 038B (+20 degree) (IMAGE FLIP: ON)
-				if debug:
-					print('pan_tilt need some love (and scaling)',reply)
+				pan = (((((16*h)+g)*16)+f)*16)+e
+				tilt = (((((16*d)+c)*16)+b)*16)+a
+				pan = visca_to_degree(pan, 'pan')
+				tilt = visca_to_degree(tilt, 'tilt')
+				reply = [pan, tilt]
 			elif function == 'fan':
 				if reply == 0:
 					reply = True
@@ -1454,15 +1455,26 @@ class Visca(object):
 	# ----------------------------------------------------
 	# ----------------------  PAN TILT -------------------
 	# ----------------------------------------------------
-	def _cmd_ptd(self,lr,ud):
+	def _cmd_ptd(self, lr, ud):
+		"""
+		simple shortcut to send _cmd_cam with pan_tilt_speed
+		"""
 		subcmd = '\x01'+chr(self.pan_speedy)+chr(self.tilt_speedy)+chr(lr)+chr(ud)
 		return self._cmd_cam_alt(subcmd)
 
+	@property
+	def pan_speed(self):
+		return self._query('pan_tilt_speed')
+	@pan_speed.setter
 	def pan_speed(self, pan_speed):
 		if debug:
 			print('pan_speed', pan_speed)
 		self.pan_speedy = pan_speed
 
+	@property
+	def tilt_speed(self):
+		return self._query('pan_tilt_speed')
+	@tilt_speed.setter
 	def tilt_speed(self, tilt_speed):
 		if debug:
 			print('tilt_speed', tilt_speed)
@@ -1513,19 +1525,40 @@ class Visca(object):
 			print('stop')
 		return self._cmd_ptd(0x03,0x03)
 
+	@property
+	def pan(self):
+		"""
+		pan
+			:between -170 & 170
+		"""
+		return self._query('pan_tilt')
+	@pan.setter
 	def pan(self, pan):
 		if debug:
 			print('pan', pan)
+		pan = degree_to_visca(pan, 'pan')
 		pan = self._i2v(pan)
 		subcmd = '\x02' + chr(self.pan_speedy) + chr(self.tilt_speedy) + pan + chr(0)
 
+	@property
+	def tilt(self):
+		"""
+		tilt
+			:between -20 & 90 if flip == False
+			:between -20 & 90 if flip == True
+			: default flip is False
+		"""
+		return self._query('pan_tilt')
+	@tilt.setter
 	def tilt(self, tilt):
 		if debug:
 			print('tilt', tilt)
+		tilt = degree_to_visca(tilt, 'tilt')
 		tilt = self._i2v(tilt)
 		subcmd = '\x02' + chr(self.pan_speedy) + chr(self.tilt_speedy) + tilt + chr(0)
 
-	def pan_tilt(self,pan,tilt):
+	# FIX ME : not sur this one is need. Separate pan / tilt might be enough
+	def pan_tilt(self, pan, tilt):
 		if debug:
 			print('pan_tilt',pan,tilt)
 		pan = self._i2v(pan)
