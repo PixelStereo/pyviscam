@@ -58,7 +58,7 @@ class Serial(object):
         self.portname=portname
         if (self.port == None):
             try:
-                self.port = serial.Serial(self.portname, 9600, timeout=2, stopbits=1, \
+                self.port = serial.Serial(self.portname, 9600, timeout=None, stopbits=1, \
                 						  bytesize=8, rtscts=False, dsrdtr=False)
                 self.port.flushInput()
             except Exception as e:
