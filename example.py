@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from time import sleep
-from pyvisca.PyVisca import Viscam, Visca
+from pyvisca.PyVisca import Viscam, Camera
 
 print '----- visca bus initialisation -----'
 # create a visca bus object
@@ -22,7 +22,7 @@ v1 = cams.get_instances()[0]
 
 print('available parameters : ')
 print('-------------------------')
-prop_list = [p for p in dir(Visca) if isinstance(getattr(Visca, p),property)]
+prop_list = [p for p in dir(Camera) if isinstance(getattr(Camera, p),property)]
 for prop in prop_list:
 	v1._query(prop)
 

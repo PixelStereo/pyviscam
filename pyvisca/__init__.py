@@ -20,3 +20,14 @@ gain_limit_val = {4:+6, 5:+8, 6:+10, 7:+12, 8:+14, 9:+16, \
 
 video_val = {0:'1080i59.95', 1:'1080p29.97', 2:'720p59.94', 3:'720p29.97', 4:'NTSC', \
 			 8:'1080i50', 9:'720p50', 10:'720p25', 11:'1080i50', 12:'PAL'}
+
+queries = {'power':"\x04\x00", 'zoom':"\x04\x47", 'zoom_digital':"\x04\x06",'focus_auto':"\x04\x38", 'focus':"\x04\x48", \
+		   'focus_nearlimit':"\x04\x28", 'focus_auto_sensitivity':"\x04\x58", 'focus_auto_mode':"\x04\x57", 'focus_ir':"\x04\x11", \
+		   'WB':"\x04\x35", 'gain_red':"\x04\x43", 'gain_blue':"\x04\x44", 'AE':"\x04\x39", 'slowshutter':"\x04\x5A", \
+		   'shutter':"\x04\x4A", 'iris':"\x04\x4B", 'gain':"\x04\x4C", 'gain_limit':"\x04\x2C", 'bright':"\x04\x4D", \
+		   'expo_compensation':"\x04\x3E", 'expo_compensation_amount':"\x04\x4E", 'backlight':"\x04\x33", 'WD':"\x04\x3D", \
+		   'aperture':"\x04\x42", 'HR':"\x04\x52", 'NR':"\x04\x53", 'gamma':"\x04\x5B", 'high_sensitivity':"\x04\x5E", \
+		   'FX':"\x04\x63", 'IR':"\x04\x01", 'IR_auto':"\x04\x51", 'IR_auto_threshold':"\x04\x21", 'ID':"\x04\x22", 'version':"\x00\x02", \
+		   'chroma_supress':"\x04\x5F", 'color_gain':"\x04\x49", 'color_hue':"\x04\x4F", 'info_display':"\x7E\x01\x18", \
+		   'video':"\x06\x23", 'video_next':"\x06\x33", 'IR_receive':"\x06\x08", 'condition':"\x06\x34",'pan_tilt_speed':"\x06\x11", \
+		   'pan_tilt':"\x06\x12",'pan_tilt_mode':"\x06\x10",'fan':"\x7E\x01\x38"}

@@ -1,10 +1,17 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+This file contains the Camera class that represent a camera device
+You don't have to create this class by yourself as it is done for each device
+that answers to a broadcast message.
+
+"""
+
 from pan_tilt_utils import degree_to_visca, visca_to_degree
 # import constants
 from pyvisca import shutter_val, iris_val, expo_compensation_val, \
-					gain_val, gain_limit_val, video_val
+					gain_val, gain_limit_val, video_val, queries
 
 from convert import hex_to_int
 
@@ -12,7 +19,9 @@ debug = 1
 
 
 class Camera(object):
-	"""create a visca device object"""
+	"""
+	create a visca camera
+	"""
 	def __init__(self, serial=None):
 		"""the constructor"""
 		self.serial = serial
@@ -160,124 +169,27 @@ class Camera(object):
 			return False
 		if debug == 4:
 			print('QUERY', function)
-		if function == 'power':
-			subcmd = "\x04\x00"
-		elif function == 'zoom':
-			subcmd = "\x04\x47"
-		elif function == 'zoom_digital':
-			subcmd = "\x04\x06"
-		elif function == 'focus_auto':
-			subcmd = "\x04\x38"
-		elif function == 'focus':
-			subcmd = "\x04\x48"			
-		elif function == 'focus_nearlimit':
-			subcmd = "\x04\x28"
-		elif function == 'focus_auto_sensitivity':
-			subcmd = "\x04\x58"
-		elif function == 'focus_auto_mode':
-			subcmd = "\x04\x57"
-		elif function == 'focus_ir':
-			subcmd = "\x04\x11"
-		elif function == 'WB':
-			subcmd = "\x04\x35"
-		elif function == 'gain_red':
-			subcmd = "\x04\x43"
-		elif function == 'gain_blue':
-			subcmd = "\x04\x44"
-		elif function == 'AE':
-			subcmd = "\x04\x39"
-		elif function == 'slowshutter':
-			subcmd = "\x04\x5A"
-		elif function == 'shutter':
-			subcmd = "\x04\x4A"
-		elif function == 'iris':
-			subcmd = "\x04\x4B"
-		elif function == 'gain':
-			subcmd = "\x04\x4C"
-		elif function == 'gain_limit':
-			subcmd = "\x04\x2C"
-		elif function == 'bright':
-			subcmd = "\x04\x4D"
-		elif function == 'expo_compensation':
-			subcmd = "\x04\x3E"
-		elif function == 'expo_compensation_amount':
-			subcmd = "\x04\x4E"
-		elif function == 'backlight':
-			subcmd = "\x04\x33"
-		elif function == 'WD':
-			subcmd = "\x04\x3D"
-		elif function == 'aperture':
-			subcmd = "\x04\x42"
-		elif function == 'HR':
-			subcmd = "\x04\x52"
-		elif function == 'NR':
-			subcmd = "\x04\x53"
-		elif function == 'gamma':
-			subcmd = "\x04\x5B"
-		elif function == 'high_sensitivity':
-			subcmd = "\x04\x5E"
-		elif function == 'FX':
-			subcmd = "\x04\x63"
-		elif function == 'IR':
-			subcmd = "\x04\x01"
-		elif function == 'IR_auto':
-			subcmd = "\x04\x51"
-		elif function == 'IR_auto_threshold':
-			subcmd = "\x04\x21"
-		# FIXME : create the ID property
-		elif function == 'ID':
-			subcmd = "\x04\x22"
-		elif function == 'version':
-			subcmd = "\x00\x02"
-		elif function == 'chroma_supress':
-			subcmd = "\x04\x5F"
-		elif function == 'color_gain':
-			subcmd = "\x04\x49"
-		elif function == 'color_hue':
-			subcmd = "\x04\x4F"
-		elif function == 'info_display':
-			subcmd = "\x7E\x01\x18"
-		elif function == 'video':
-			subcmd = "\x06\x23"
-		elif function == 'video_next':
-			subcmd = "\x06\x33"
-		elif function == 'IR_receive':
-			subcmd = "\x06\x08"
-		# FIXME : create condition ??
-		elif function == 'condition':
-			subcmd = "\x06\x34"
-		elif function == 'pan_tilt_speed':
-			subcmd = "\x06\x11"
-		elif function == 'pan_tilt':
-			subcmd = "\x06\x12"
-		elif function == 'pan_tilt_mode':
-			subcmd = "\x06\x10"
-		elif function == 'fan':
-			subcmd = "\x7E\x01\x38"
+		if function == 'pan' or function == 'tilt':
+			# pan and tilt are separate properties.
+			# If we want to automatically query all properties, we must catch it here
+			function = 'pan_tilt'
+		# transform the property into its code (located in the __init__file of the package)
+		subcmd = queries.get(function)
 		else:
+			# there is no code for this function
 			if debug:
 				dbg = 'function {function} has not yet been implemented'
 				print(dbg.format(function=function))
 			return False
-		# make the packet with the dedicated query
+		# query starts with '\x09'
 		query='\x09' + subcmd
+		# wait for the reply
 		reply = self._come_back(query)
 		if debug == 4:
 			dbg = '{function} is {reply}'
 			print dbg.format(function=function, reply=reply.encode('hex'))
 		if reply:
-			#packet = reply
-			#header=ord(packet[0])
-			#term=ord(packet[-1:])
-			#qq=ord(packet[1])
-			#sender = (header&0b01110000)>>4
-			#broadcast = (header&0b1000)>>3
-			#recipient = (header&0b0111)
 			reply=reply[2:-1].encode('hex')
-#			if len(reply)>3 and ((qq & 0b11110000)>>4)==5:
-#				socketno = (qq & 0b1111)
-#			elif len(reply)==3 and ((qq & 0b11110000)>>4)==5:
-#				socketno = (qq & 0b1111)
 			def hex_unpack(zoom,L,size=2):
 				part = zoom[:size]
 				zoom=zoom[size:]
