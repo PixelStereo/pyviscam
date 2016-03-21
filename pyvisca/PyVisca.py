@@ -358,11 +358,11 @@ class Visca(object):
 			return False
 		elif reply == '\x90'+'\x61'+'\x41'+'\xFF':
 			if debug:
-				print('-----------ERROR 1------------------')
+				print('-----------ERROR 1 (not in this mode)------------')
 			return False
 		elif reply == '\x90'+'\x62'+'\x41'+'\xFF':
 			if debug:
-				print('-----------ERROR 2------------------')
+				print('-----------ERROR 2 (not in this mode)------------')
 			return False
 		
 	def _come_back(self,query):
