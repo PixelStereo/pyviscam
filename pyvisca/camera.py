@@ -175,9 +175,9 @@ class Camera(object):
 			function = 'pan_tilt'
 		# transform the property into its code (located in the __init__file of the package)
 		subcmd = queries.get(function)
-		else:
-			# there is no code for this function
+		if not subcmd:
 			if debug:
+				# there is no code for this function
 				dbg = 'function {function} has not yet been implemented'
 				print(dbg.format(function=function))
 			return False
