@@ -652,19 +652,11 @@ class Visca(object):
 					print("don't understand this reply - this have to be implemented")
 			if debug:
 				dbg = '{function} is {reply}'
-				if reply == True:
-					reply2print = 'ON'
-				elif reply == False:
-					reply2print = 'OFF'
-				else:
-					reply2print = reply
-				print dbg.format(function=function, reply=reply2print)
+				print dbg.format(function=function, reply=reply)
 			return reply
-
 
 	#FIXME: IR_Receive_Return
 	#FIXME: Pan-tiltLimitSet
-
 	# ----------------------------------------------------
 	# ---------------------- POWER -----------------------
 	# ----------------------------------------------------
