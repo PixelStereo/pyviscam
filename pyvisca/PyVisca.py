@@ -16,6 +16,8 @@ from pan_tilt_utils import degree_to_visca, visca_to_degree
 from pyvisca import shutter_val, iris_val, expo_compensation_val, \
 					gain_val, gain_limit_val, video_val
 
+from convert import hex_to_int
+
 debug = 1
 
 class Serial(object):
@@ -621,16 +623,10 @@ class Visca(object):
 			elif function == 'video_next':
 				reply = video_val.get(reply)
 			elif function == 'pan_tilt':
-				a=int(reply[7],16)
-				b=int(reply[6],16)
-				c=int(reply[5],16)
-				d=int(reply[4],16)
-				e=int(reply[3],16)
-				f=int(reply[2],16)
-				g=int(reply[1],16)
-				h=int(reply[0],16)
-				pan = (((((16*h)+g)*16)+f)*16)+e
-				tilt = (((((16*d)+c)*16)+b)*16)+a
+				pan = reply[0:4]
+				tilt = reply[4:8]
+				pan = hex_to_int(pan)
+				tilt = hex_to_int(tilt)
 				pan = visca_to_degree(pan, 'pan')
 				tilt = visca_to_degree(tilt, 'tilt')
 				reply = [pan, tilt]
@@ -642,14 +638,7 @@ class Visca(object):
 			else:
 				if debug == 4:
 					print('generic translation for function :', function)
-				if len(reply) == 4:
-					a=int(reply[3],16)
-					b=int(reply[2],16)
-					c=int(reply[1],16)
-					d=int(reply[0],16)
-					reply = ((((((16*d)+c)*16)+b)*16)+a)
-				else:
-					print("don't understand this reply - this have to be implemented")
+				reply = hex_to_int(reply)
 			if debug:
 				dbg = '{function} is {reply}'
 				print dbg.format(function=function, reply=reply)
@@ -1505,14 +1494,17 @@ class Visca(object):
 		pan
 			:between -170 & 170
 		"""
-		return self._query('pan_tilt')
+		return self._query('pan_tilt')[0]
 	@pan.setter
 	def pan(self, pan):
 		if debug:
 			print('pan', pan)
 		pan = degree_to_visca(pan, 'pan')
 		pan = self._i2v(pan)
-		subcmd = '\x02' + chr(self.pan_speedy) + chr(self.tilt_speedy) + pan + chr(0)
+		tilt = degree_to_visca(self.tilt, 'tilt')
+		tilt = self._i2v(tilt)
+		subcmd = '\x02' + chr(self.pan_speedy) + chr(self.tilt_speedy) + pan + tilt
+		self._cmd_cam_alt(subcmd)
 
 	@property
 	def tilt(self):
@@ -1522,14 +1514,17 @@ class Visca(object):
 			:between -20 & 90 if flip == True
 			: default flip is False
 		"""
-		return self._query('pan_tilt')
+		return self._query('pan_tilt')[1]
 	@tilt.setter
 	def tilt(self, tilt):
 		if debug:
 			print('tilt', tilt)
+		pan = degree_to_visca(self.pan, 'pan')
+		pan = self._i2v(pan)
 		tilt = degree_to_visca(tilt, 'tilt')
 		tilt = self._i2v(tilt)
-		subcmd = '\x02' + chr(self.pan_speedy) + chr(self.tilt_speedy) + tilt + chr(0)
+		subcmd = '\x02' + chr(self.pan_speedy) + chr(self.tilt_speedy) + pan + tilt
+		self._cmd_cam_alt(subcmd)
 
 	# FIX ME : not sur this one is need. Separate pan / tilt might be enough
 	def pan_tilt(self, pan, tilt):
