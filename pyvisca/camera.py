@@ -10,6 +10,7 @@ from convert import hex_to_int
 
 debug = 1
 
+
 class Camera(object):
 	"""create a visca device object"""
 	def __init__(self, serial=None):
