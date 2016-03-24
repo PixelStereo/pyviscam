@@ -517,7 +517,7 @@ class Camera(object):
 	@property
 	def focus_nearlimit(self):
 	    return self._query('focus_nearlimit')
-	
+	@focus_nearlimit.setter
 	def focus_nearlimit(self, value):
 		"""
 		Can be set in a range from 1000 (∞) to F000 (10 mm)
