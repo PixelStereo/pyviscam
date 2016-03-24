@@ -107,6 +107,11 @@ class Camera(object):
 		self._cmd_cam(subcmd, prefix)
 
 	def _cmd_cam(self, subcmd, prefix='\x01\x04'):
+		"""
+		Send a command to the camera and return the answer
+		The camera answer first an acceptation of the command, and then a completion
+		If the command cannot be send or is not a valide command, the camera will answers an error code
+		"""
 		packet = prefix + subcmd
 		reply = self._send_packet(packet)
 		if reply == '\x90'+'\x41'+'\xFF':
@@ -138,7 +143,7 @@ class Camera(object):
 				print('-----------ERROR 2 (not in this mode)------------')
 			return False
 		
-	def _come_back(self,query):
+	def _come_back(self, query):
 		""" Send a query and wait for (ack + completion + answer)
 			Accepts a visca query (hexadeciaml)
 			Return a visca answer if ack and completion (hexadeciaml)"""
