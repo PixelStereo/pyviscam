@@ -25,8 +25,8 @@ class Camera(object):
 	def __init__(self, serial=None):
 		"""the constructor"""
 		self.serial = serial
-		self.pan_speedy = 0x01
-		self.tilt_speedy = 0x01
+		self.pan_speed = 0x01
+		self.tilt_speed = 0x01
 		print("CREATING A VISCA INSTANCE")
 
 	def _send_packet(self, data, recipient=1):
@@ -382,7 +382,6 @@ class Camera(object):
 		if speed == 3:
 			subcmd = "\x07\x02"
 		else:
-			self.zoom_tele_speed = speed
 			sbyte = 0x20 + (speed&0b111)
 			subcmd = "\x07" + chr(sbyte)
 		if debug:
@@ -397,7 +396,6 @@ class Camera(object):
 		if speed == 3:
 			subcmd = "\x07\x03"
 		else:
-			self.zoom_tele_speed = speed
 			sbyte = 0x30 + (speed&0b111)
 			subcmd = "\x07" + chr(sbyte)
 		if debug:
@@ -1103,7 +1101,7 @@ class Camera(object):
 		"""
 		simple shortcut to send _cmd_cam with pan_tilt_speed
 		"""
-		subcmd = '\x01'+chr(self.pan_speedy)+chr(self.tilt_speedy)+chr(lr)+chr(ud)
+		subcmd = '\x01'+chr(self.pan_speed)+chr(self.tilt_speed)+chr(lr)+chr(ud)
 		return self._cmd_cam_alt(subcmd)
 
 	@property
@@ -1113,7 +1111,7 @@ class Camera(object):
 	def pan_speed(self, pan_speed):
 		if debug:
 			print('pan_speed', pan_speed)
-		self.pan_speedy = pan_speed
+		self.pan_speed = pan_speed
 
 	@property
 	def tilt_speed(self):
@@ -1122,7 +1120,7 @@ class Camera(object):
 	def tilt_speed(self, tilt_speed):
 		if debug:
 			print('tilt_speed', tilt_speed)
-		self.tilt_speedy = tilt_speed
+		self.tilt_speed = tilt_speed
 
 	def up(self):
 		if debug:
@@ -1184,7 +1182,7 @@ class Camera(object):
 		pan = self._i2v(pan)
 		tilt = degree_to_visca(self.tilt, 'tilt')
 		tilt = self._i2v(tilt)
-		subcmd = '\x02' + chr(self.pan_speedy) + chr(self.tilt_speedy) + pan + tilt
+		subcmd = '\x02' + chr(self.pan_speed) + chr(self.tilt_speed) + pan + tilt
 		self._cmd_cam_alt(subcmd)
 
 	@property
@@ -1204,16 +1202,8 @@ class Camera(object):
 		pan = self._i2v(pan)
 		tilt = degree_to_visca(tilt, 'tilt')
 		tilt = self._i2v(tilt)
-		subcmd = '\x02' + chr(self.pan_speedy) + chr(self.tilt_speedy) + pan + tilt
+		subcmd = '\x02' + chr(self.pan_speed) + chr(self.tilt_speed) + pan + tilt
 		self._cmd_cam_alt(subcmd)
-
-	# FIX ME : not sur this one is need. Separate pan / tilt might be enough
-	def pan_tilt(self, pan, tilt):
-		if debug:
-			print('pan_tilt',pan,tilt)
-		pan = self._i2v(pan)
-		tilt = self._i2v(tilt)
-		subcmd = '\x02'+chr(self.pan_speedy)+chr(self.tilt_speedy)+pan+tilt
 
 	def home(self):
 		if debug:
