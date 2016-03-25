@@ -25,8 +25,8 @@ class Camera(object):
 	def __init__(self, serial=None):
 		"""the constructor"""
 		self.serial = serial
-		self.pan_speed = 0x01
-		self.tilt_speed = 0x01
+		self._pan_speed = '\x05'
+		self._tilt_speed = '\x05'
 		print("CREATING A VISCA INSTANCE")
 
 	def _send_packet(self, data, recipient=1):
@@ -1106,21 +1106,17 @@ class Camera(object):
 
 	@property
 	def pan_speed(self):
-		return self._query('pan_tilt_speed')
+		return self._pan_speed
 	@pan_speed.setter
-	def pan_speed(self, pan_speed):
-		if debug:
-			print('pan_speed', pan_speed)
-		self.pan_speed = pan_speed
+	def pan_speed(self, speed):
+		self._pan_speed = speed
 
 	@property
 	def tilt_speed(self):
-		return self._query('pan_tilt_speed')
+		return self._tilt_speed
 	@tilt_speed.setter
-	def tilt_speed(self, tilt_speed):
-		if debug:
-			print('tilt_speed', tilt_speed)
-		self.tilt_speed = tilt_speed
+	def tilt_speed(self, speed):
+		self._tilt_speed = speed
 
 	def up(self):
 		if debug:
