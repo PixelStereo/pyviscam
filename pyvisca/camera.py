@@ -25,8 +25,8 @@ class Camera(object):
 	def __init__(self, serial=None):
 		"""the constructor"""
 		self.serial = serial
-		self._pan_speed = '\x05'
-		self._tilt_speed = '\x05'
+		self._pan_speed = 0x05
+		self._tilt_speed = 0x05
 		print("CREATING A VISCA INSTANCE")
 
 	def _send_packet(self, data, recipient=1):
@@ -877,7 +877,7 @@ class Camera(object):
 	def gamma(self, value):
 		if debug:
 			print('gamma', value)
-		subcmd = "\x5B" + value
+		subcmd = "\x5B" + chr(value)
 		return self._cmd_cam(subcmd)
 
 	@property
@@ -962,7 +962,7 @@ class Camera(object):
 		return self._cmd_cam(subcmd)
 
 	# ----------- MEMORY -------------
-	def _memory(self,func,num):
+	def _memory(self, func, num):
 		if debug:
 			print('memory', func, num)
 		if num > 5:
@@ -1101,7 +1101,9 @@ class Camera(object):
 		"""
 		simple shortcut to send _cmd_cam with pan_tilt_speed
 		"""
+		print 'pre', type(lr), type(ud), type(chr(lr)), type(chr(ud))
 		subcmd = '\x01'+chr(self.pan_speed)+chr(self.tilt_speed)+chr(lr)+chr(ud)
+		print 'command'
 		return self._cmd_cam_alt(subcmd)
 
 	@property
@@ -1121,47 +1123,47 @@ class Camera(object):
 	def up(self):
 		if debug:
 			print('up')
-		return self._cmd_ptd(0x03,0x01)
+		return self._cmd_ptd(0x03, 0x01)
 
 	def down(self):
 		if debug:
 			print('down')
-		return self._cmd_ptd(0x03,0x02)
+		return self._cmd_ptd(0x03, 0x02)
 	
 	def left(self):
 		if debug:
 			print('left')
-		return self._cmd_ptd(0x01,0x03)
+		return self._cmd_ptd(0x01, 0x03)
 	
 	def right(self):
 		if debug:
 			print('right')
-		return self._cmd_ptd(0x02,0x03)
+		return self._cmd_ptd(0x02, 0x03)
 	
 	def upleft(self):
 		if debug:
 			print('upleft')
-		return self._cmd_ptd(0x01,0x01)
+		return self._cmd_ptd(0x01, 0x01)
 
 	def upright(self):
 		if debug:
 			print('upright')
-		return self._cmd_ptd(0x02,0x01)
+		return self._cmd_ptd(0x02, 0x01)
 	
 	def downleft(self):
 		if debug:
 			print('downleft')
-		return self._cmd_ptd(0x01,0x02)
+		return self._cmd_ptd(0x01, 0x02)
 	
 	def downright(self):
 		if debug:
 			print('downright')
-		return self._cmd_ptd(0x02,0x02)
+		return self._cmd_ptd(0x02, 0x02)
 
 	def stop(self):
 		if debug:
 			print('stop')
-		return self._cmd_ptd(0x03,0x03)
+		return self._cmd_ptd(0x03, 0x03)
 
 	@property
 	def pan(self):
