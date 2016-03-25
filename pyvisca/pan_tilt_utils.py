@@ -73,6 +73,6 @@ def visca_to_degree(value, what, flip=False):
 # test
 translation = degree_to_visca(22.2, 'pan')
 print visca_to_degree(translation, 'pan')
-translation = degree_to_visca(-30, 'tilt')
+translation = degree_to_visca(-20, 'tilt')
 print visca_to_degree(translation, 'tilt')
 """
