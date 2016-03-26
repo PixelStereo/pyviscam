@@ -11,12 +11,13 @@ setup(
   url='https://github.com/PixelStereo/PyVisca', 
   download_url = 'https://github.com/PixelStereo/PyVisca/tarball/0.0.1', 
   classifiers = [
-    'Development Status :: 2 - Pre-Alpha',
+    'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
     'Natural Language :: English',
     'Operating System :: OS Independent',
     'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3.4',
     'Topic :: Software Development :: Libraries :: Python Modules'
     ],
 )
