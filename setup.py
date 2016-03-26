@@ -9,7 +9,7 @@ setup(
   description = 'Control camera through Visca protocol',
   author = 'Pixel Stereo',
   url='https://github.com/PixelStereo/pyviscam', 
-  download_url = 'https://github.com/PixelStereo/pyviscam/tarball/0.0.1', 
+  download_url = 'https://github.com/PixelStereo/pyviscam/tarball/0.0.1.zip', 
   classifiers = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',
