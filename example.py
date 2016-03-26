@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from time import sleep
-from pyvisca.PyVisca import Viscam, Camera
+from pyviscam.broadcast import Viscam, Camera
 
 print '----- visca bus initialisation -----'
 # create a visca bus object

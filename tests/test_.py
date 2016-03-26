@@ -9,9 +9,9 @@ lib_path = os.path.abspath('./../')
 sys.path.append(lib_path)
 
 # for Travis CI
-lib_path = os.path.abspath('./../pyvisca')
+lib_path = os.path.abspath('./../pyviscam')
 sys.path.append(lib_path)
 
 
-from pyvisca import Viscam
+from pyviscam.broadcast import Viscam
 
