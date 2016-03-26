@@ -10,6 +10,12 @@ I use a EVI H100S to develop this API. I hope to finish the development soon, an
 This is an API, if you're looking for an application to control your camera, have a look at [Viscam](https://github.com/PixelStereo/viscam).
 
 ## INSTALL
+
+First, install dependancies : 
+
+    https://raw.githubusercontent.com/PixelStereo/pyviscam/master/requirements.txt    
+Then, install the last version of the package. Remember it's an alpha version    
+
     pip install https://github.com/PixelStereo/pyviscam/archive/0.0.4.zip   
 
 ## QUICKSTART
