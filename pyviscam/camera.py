@@ -144,9 +144,11 @@ class Camera(object):
 			return False
 		
 	def _come_back(self, query):
-		""" Send a query and wait for (ack + completion + answer)
-			Accepts a visca query (hexadeciaml)
-			Return a visca answer if ack and completion (hexadeciaml)"""
+		"""
+		Send a query and wait for (ack + completion + answer)
+			:Accepts a visca query (hexadeciaml)
+			:Return a visca answer if ack and completion (hexadeciaml)
+		"""
 		# send the query and wait for feedback
 		reply = self._send_packet(query)
 		#reply = reply.encode('hex')
@@ -840,6 +842,9 @@ class Camera(object):
 	def HR(self):
 		"""
 		High-Resolution Mode ON/OFF
+		:return: 		True if successful, False if not
+        :type state:  	types.BooleanType
+        :rtype:         types.BooleanType
 		"""
 		return self._query('HR')
 	@HR.setter
@@ -864,20 +869,28 @@ class Camera(object):
 	def NR(self, value):
 		if debug:
 			print('NR', value)
-		subcmd = "\x53" + value
+		subcmd = "\x53" + chr(value)
 		return self._cmd_cam(subcmd)
 
 	@property
 	def gamma(self):
 		"""
-		Gamma setting (0: Standard, 1 to 4)
+		Gamma setting
+			0: Standard
+			1: Straight gamma
+			2: S-curve - Low
+			3: S-curve - Mid
+			4: S-curve - High
+		:return: 		True if successful, False if not
+        :type value:  	types.IntType
+        :rtype:         types.BooleanType
 		"""
 		return self._query('gamma')
 	@gamma.setter
 	def gamma(self, value):
 		if debug:
 			print('gamma', value)
-		subcmd = "\x5B" + chr(value)
+		subcmd = '\x5B' + chr(value)
 		return self._cmd_cam(subcmd)
 
 	@property
