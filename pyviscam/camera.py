@@ -14,6 +14,8 @@ from pyviscam import shutter_val, iris_val, expo_compensation_val, \
 					gain_val, gain_limit_val, video_val, queries
 
 from convert import hex_to_int
+from constants import shutter_val, iris_val, expo_compensation_val, gain_val, \
+					  gain_limit_val, video_val, queries
 
 debug = 1
 
