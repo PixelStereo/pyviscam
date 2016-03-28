@@ -51,7 +51,6 @@ def visca_to_degree(value, what, flip=False):
 			new_max = 0
 	elif what == 'tilt':
 		# value must be between -20 & 90
-		print value
 		if value <= 4080:
 			old_min = 0
 			old_max = 4080
