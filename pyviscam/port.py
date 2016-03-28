@@ -85,7 +85,7 @@ class Serial(object):
         if self.port:
             if not self.port.isOpen():
                 if debug:
-                    print("message hasn't be send because serial port cannot be opened")
+                    print("ERROR 14 - no serial port cannot be opened")
                 return False
             # lets see if a completion message or someting
             # else waits in the buffer. If yes dump it.
@@ -96,5 +96,5 @@ class Serial(object):
             return True
         else:
             if debug:
-                print("message hasn't be send because there is no serial port")
+                print("ERROR 15 - no serial port")
             return False
