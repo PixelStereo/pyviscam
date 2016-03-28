@@ -284,7 +284,7 @@ class Camera(object):
 				reply = reply
 			elif function == 'gamma':
 				reply = reply
-			elif function == 'chroma_supress':
+			elif function == 'chromasupress':
 				reply = reply
 			elif function == 'FX':
 				if reply == 0:
@@ -999,18 +999,18 @@ class Camera(object):
 	# todo id_write
 
 	@property
-	def chroma_supress(self):
+	def chromasupress(self):
 		"""
 		pp: Chroma Suppress setting level
 		00: OFF
 		1 to 3: ON (3 levels)
 		Effect increases as the level number increases.
 		"""
-		return self._query('chroma_supress')
-	@chroma_supress.setter
-	def chroma_supress(self, level):
+		return self._query('chromasupress')
+	@chromasupress.setter
+	def chromasupress(self, level):
 		if debug:
-			print('chroma_supress', level)
+			print('chromasupress', level)
 		subcmd = "\x5F" + level
 		return self._cmd_cam(subcmd)
 		
