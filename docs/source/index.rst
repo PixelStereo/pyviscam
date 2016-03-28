@@ -3,20 +3,29 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to pyviscam's documentation!
+Documentation for pyviscam
 ===================================
 
-Contents:
+pyviscam is a module for controlling video camera with the VISCA protocol
 
-.. toctree::
-   :maxdepth: 2
-
+.. automodule:: pyviscam/broadcast
 
 
-Indices and tables
-==================
+useful #1 -- auto members
+=========================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+This is something I want to say that is not in the docstring.
 
+.. automodule:: an_example_pypi_project.useful_1
+   :members:
+
+useful #2 -- explicit members
+=============================
+
+This is something I want to say that is not in the docstring.
+
+.. automodule:: an_example_pypi_project.useful_2
+   :members: public_fn_with_sphinxy_docstring, _private_fn_with_docstring
+
+.. autoclass:: MyPublicClass
+   :members: get_foobar, _get_baz
