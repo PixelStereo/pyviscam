@@ -20,8 +20,7 @@ class Serial(object):
 
     def listports(self):
         """ Lists serial port names
-
-            :raises EnvironmentError:
+            :exit 1 (error code 11)
                 On unsupported or unknown platforms
             :returns:
                 A list of the serial ports available on the system
@@ -34,8 +33,9 @@ class Serial(object):
         elif sys.platform.startswith('darwin'):
             ports = glob.glob('/dev/tty.*')
         else:
-            raise EnvironmentError('Unsupported platform')
-
+            if debug:
+                print('ERROR 11 - Unsupported platform')
+            sys.exit(1)
         result = []
         for port in ports:
             try:
@@ -54,11 +54,12 @@ class Serial(object):
                 self.port = serial.Serial(self.portname, 9600, timeout=None, stopbits=1, \
                 						  bytesize=8, rtscts=False, dsrdtr=False)
                 self.port.flushInput()
-            except Exception as e:
-                pass
-                #raise e
+                self.mutex.release()
+                return True
+            except:
                 self.port = None
-        self.mutex.release()    
+                self.mutex.release()
+                return False
 
     def recv_packet(self, extra_title=None):
         if self.port:
