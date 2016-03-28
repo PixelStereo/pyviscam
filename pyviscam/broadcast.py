@@ -91,7 +91,7 @@ class Viscam(object):
 			viscams = []
 			while z <= d:
 				z = z + 1
-	        	cam = Camera(self.serial)
+	        	cam = Camera(self)
 	        	viscams.append(cam)
 	        	# Turn off digital zoom aka zoom_digital
 	        	cam.zoom_digital = False

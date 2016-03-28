@@ -22,12 +22,14 @@ class Camera(object):
 	"""
 	create a visca camera
 	"""
-	def __init__(self, serial=None):
+	def __init__(self, parent):
 		"""the constructor"""
-		self.serial = serial
+		self.serial = parent.serial
+		self.parent = parent
 		self._pan_speed = 0x05
 		self._tilt_speed = 0x05
-		print("CREATING A VISCA INSTANCE")
+		if debug:
+			print("new visca camera")
 
 	def _send_packet(self, data, recipient=1):
 		"""
