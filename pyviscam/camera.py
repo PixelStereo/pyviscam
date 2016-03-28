@@ -452,7 +452,7 @@ class Camera(object):
 		if speed == 3:
 			subcmd = "\x08\x03"
 		else:
-			sbyte = 0x30 + (value&0b111)
+			sbyte = 0x30 + (speed&0b111)
 			subcmd = "\x08" + chr(sbyte)
 		if debug:
 			print('focus_far', speed)
@@ -466,7 +466,7 @@ class Camera(object):
 		if speed == 3:
 			subcmd = "\x08\x02"
 		else:
-			sbyte = 0x20 + (value&0b111)
+			sbyte = 0x20 + (speed&0b111)
 			subcmd = "\x08" + chr(sbyte)
 		if debug:
 			print('focus_near', speed)
