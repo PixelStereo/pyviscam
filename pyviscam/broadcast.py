@@ -19,7 +19,6 @@ class Viscam(object):
 	Viscam is a broadcast command relative to a Serial port
 	Viscam initialisation call _cmd_address_set and _if_clear
 	"""
-
 	def __init__(self, port=None):
 		super(Viscam, self).__init__()
 		# create a serial port communication
@@ -32,7 +31,8 @@ class Viscam(object):
 		else:
 			# please make a simulation in case you don't have
 			# a serial port with a visca camera available
-			print("no serial port selected")
+			if debug:
+				print("ERROR 34 - no serial port selected")
 
 	def get_instances(self):
 		return self.viscams
@@ -50,7 +50,9 @@ class Viscam(object):
 		self._if_clear()
 
 	def _send_broadcast(self, data):
-		# shortcut to broadcast commands
+		"""
+		shortcut to broadcast commands
+		"""
 		return self._send_packet(data, -1)
 
 	def _cmd_adress_set(self):
@@ -64,32 +66,32 @@ class Viscam(object):
 		first=1
 
 		reply = self._send_broadcast('\x30'+chr(first)) # set address
-
-		if not reply or type(reply) == None:
+		if isinstance(reply,type(None)):
 			if debug:
-				print("No reply from the bus.")
+				print("ERROR 35 - No reply from the bus")
 			sys.exit(1)
 		if len(reply)!=4 or reply[-1:]!='\xff':
 			if debug:
-				print("ERROR enumerating devices")
+				print("ERROR 36 - enumerating devices")
 			sys.exit(1)
 		if reply[0] != '\x88':
 			if debug:
-				print("ERROR: expecting broadcast answer to an enumeration request")
+				print("ERROR 37 - expecting broadcast answer to an enumeration request")
 			sys.exit(1)
 		address = ord(reply[2])
 
-		d=address-first
-		if d==0:
+		devices_count = address - first
+		if devices_count == 0:
 			if debug:
-				print('unexpected ERROR, someone reply, but no Camera found')
+				print('ERROR 38 - unexpected answer : someone reply, but no Camera found')
 			sys.exit(1)
 		else:
-			print("found %i devices on the bus" % d)
-			z = 1
+			if debug:
+				print("found %i devices on the bus" % devices_count)
+			device = 1
 			viscams = []
-			while z <= d:
-				z = z + 1
+			while device <= devices_count:
+				device = device + 1
 	        	cam = Camera(self)
 	        	viscams.append(cam)
 	        	# Turn off digital zoom aka zoom_digital
@@ -106,7 +108,7 @@ class Viscam(object):
 		# interface clear all
 		reply = self._send_broadcast('\x01\x00\x01') 
 		if not reply[1:] == '\x01\x00\x01\xff':
-			print("ERROR clearing all interfaces on the bus!")
+			print("ERROR 39 - when clearing interfaces on the bus!")
 			sys.exit(1)
 		if debug:
 			print("all interfaces clear")

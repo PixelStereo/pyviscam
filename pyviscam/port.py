@@ -11,6 +11,7 @@ except:
     # python 3
     from _thread import allocate_lock
 
+debug = 1
 
 class Serial(object):
     def __init__(self):
@@ -47,7 +48,7 @@ class Serial(object):
 
     def open(self, portname):
         self.mutex.acquire()
-        self.portname=portname
+        self.portname = portname
         if (self.port == None):
             try:
                 self.port = serial.Serial(self.portname, 9600, timeout=None, stopbits=1, \
@@ -76,20 +77,23 @@ class Serial(object):
                 if byte==0xff:
                     break
             return packet
-        print('no reply from serial because there is no connexion')
+        else:
+            return False
 
-    def _write_packet(self,packet):
+    def _write_packet(self, packet):
         if self.port:
             if not self.port.isOpen():
-                pass
-                #sys.exit(1)
-
+                if debug:
+                    print("message hasn't be send because serial port cannot be opened")
+                return False
             # lets see if a completion message or someting
             # else waits in the buffer. If yes dump it.
-            if self.port.inWaiting():
+            elif self.port.inWaiting():
                 self.recv_packet("ignored")
-
             self.port.write(packet)
-            #self.dump(packet,"sent")
+            self.dump(packet, "sent")
+            return True
         else:
-            print("message hasn't be send because no serial port is open")
+            if debug:
+                print("message hasn't be send because there is no serial port")
+            return False
