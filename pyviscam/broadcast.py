@@ -1,15 +1,14 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+# imports from pyviscam lib
+from port import Serial
+from camera import Camera
+from convert import hex_to_int
 from pan_tilt_utils import degree_to_visca, visca_to_degree
-# import constants
 from pyviscam import shutter_val, iris_val, expo_compensation_val, \
 					gain_val, gain_limit_val, video_val
-from pyviscam.camera import Camera
-
-from convert import hex_to_int
-
-from port import Serial
 
 debug = 1
 
