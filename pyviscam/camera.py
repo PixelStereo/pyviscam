@@ -1114,9 +1114,7 @@ class Camera(object):
 		"""
 		simple shortcut to send _cmd_cam with pan_tilt_speed
 		"""
-		print 'pre', type(lr), type(ud), type(chr(lr)), type(chr(ud))
 		subcmd = '\x01'+chr(self.pan_speed)+chr(self.tilt_speed)+chr(lr)+chr(ud)
-		print 'command'
 		return self._cmd_cam_alt(subcmd)
 
 	@property
