@@ -19,7 +19,7 @@ def hex_to_int(value):
         print("don't understand this reply - this have to be implemented")
     return value
 
-def i2v(self, value):
+def i2v(value):
     """
     return word as dword in visca format
     packets are not allowed to be 0xff
