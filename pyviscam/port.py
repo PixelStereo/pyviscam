@@ -52,7 +52,7 @@ class Serial(object):
         if (self.port == None):
             try:
                 self.port = serial.Serial(self.portname, 9600, timeout=None, stopbits=1, \
-                						  bytesize=8, rtscts=False, dsrdtr=False)
+                                          bytesize=8, rtscts=False, dsrdtr=False)
                 self.port.flushInput()
                 self.mutex.release()
                 return True
