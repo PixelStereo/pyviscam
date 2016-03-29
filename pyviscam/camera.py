@@ -247,19 +247,19 @@ class Camera(object):
                 else:
                     reply = 'manual'
             elif function == 'shutter':
-                reply = int(reply[3], 16)
+                reply = hex_to_int(reply)
                 reply = shutter_val.get(reply)
             elif function == 'iris':
-                reply = int(reply[3], 16)
+                reply = hex_to_int(reply)
                 reply = iris_val.get(reply)
             elif function == 'gain':
-                reply = int(reply[3], 16)
+                reply = hex_to_int(reply)
                 reply = gain_val.get(reply)
             elif function == 'gain_limit':
                 reply = int(reply[3], 16)
                 reply = gain_limit_val.get(reply)
             elif function == 'bright':
-                reply = int(reply[3], 16)
+                reply = hex_to_int(reply)
                 print('bright feedback need some love')
             elif function == 'expo_compensation_amount':
                 reply = int(reply[3], 16)
