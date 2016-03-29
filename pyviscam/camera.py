@@ -8,12 +8,12 @@ that answers to a broadcast message.
 
 """
 
-from convert import hex_to_int
-from pan_tilt_utils import degree_to_visca, visca_to_degree
-from constants import shutter_val, iris_val, expo_compensation_val, gain_val, \
+from pyviscam.convert import hex_to_int, i2v
+from pyviscam.pan_tilt_utils import degree_to_visca, visca_to_degree
+from pyviscam.constants import shutter_val, iris_val, expo_compensation_val, gain_val, \
                       gain_limit_val, video_val, queries
 
-debug = 1
+from pyviscam import debug
 
 
 class Camera(object):
@@ -59,11 +59,11 @@ class Camera(object):
             # the recipient (address = 3 bits)
             rbits = recipient & 0b111
 
-        sbits=(sender & 0b111)<<4
+        sbits = (sender & 0b111)<<4
 
-        header=0b10000000 | sbits | rbits
+        header = 0b10000000 | sbits | rbits
 
-        terminator=0xff
+        terminator = 0xff
 
         packet = chr(header)+data+chr(terminator)
 
@@ -75,29 +75,12 @@ class Camera(object):
             if reply[-1:] != '\xff':
                 if debug:
                     print("received packet not terminated correctly: %s" % reply.encode('hex'))
-                reply=None
+                reply = None
             self.serial.mutex.release()
 
             return reply
         else:
             return None
-
-    def _i2v(self,value):
-        """
-        return word as dword in visca format
-        packets are not allowed to be 0xff
-        so for numbers the first nibble is 0000
-        and 0xfd gets encoded into 0x0f 0x0xd
-        """
-        if type(value) == unicode:
-            value = int(value)
-        ms = (value &  0b1111111100000000) >> 8
-        ls = (value &  0b0000000011111111)
-        p=(ms&0b11110000)>>4
-        r=(ls&0b11110000)>>4
-        q=ms&0b1111
-        s=ls&0b1111
-        return chr(p)+chr(q)+chr(r)+chr(s)
 
     def _cmd_cam_alt(self, subcmd):
         """
@@ -110,7 +93,8 @@ class Camera(object):
         """
         Send a command to the camera and return the answer
         The camera answer first an acceptation of the command, and then a completion
-        If the command cannot be send or is not a valide command, the camera will answers an error code
+        If the command cannot be send or is not a valide command
+        => the camera will answers an error code
         """
         packet = prefix + subcmd
         reply = self._send_packet(packet)
@@ -142,7 +126,7 @@ class Camera(object):
             if debug:
                 print('-----------ERROR 2 (not in this mode)------------')
             return False
-        
+
     def _come_back(self, query):
         """
         Send a query and wait for (ack + completion + answer)
@@ -170,7 +154,7 @@ class Camera(object):
         Query method needs a parameter as argument
             :Return False if no parameter is provided
             :Return False if parameter provided does not exist
-            :Return 
+            :Return
         """
         if not function:
             return False
@@ -189,29 +173,29 @@ class Camera(object):
                 print(dbg.format(function=function))
             return False
         # query starts with '\x09'
-        query='\x09' + subcmd
+        query = '\x09' + subcmd
         # wait for the reply
         reply = self._come_back(query)
         if debug == 4:
             dbg = '{function} is {reply}'
             print dbg.format(function=function, reply=reply.encode('hex'))
         if reply:
-            reply=reply[2:-1].encode('hex')
-            def hex_unpack(zoom,L,size=2):
+            reply = reply[2:-1].encode('hex')
+            def hex_unpack(zoom, L, size=2):
                 part = zoom[:size]
-                zoom=zoom[size:]
+                zoom = zoom[size:]
                 L.append(part)
                 if zoom:
-                    hex_unpack(zoom,L)
+                    hex_unpack(zoom, L)
                     return L
             if len(reply) > 2:
-                reply = hex_unpack(reply,[])
+                reply = hex_unpack(reply, [])
             elif not type(reply):
                 reply = None
             elif type(reply) == hex:
-                reply = int(reply,16)
+                reply = int(reply, 16)
             elif type(reply) == str:
-                reply = int(reply,16)
+                reply = int(reply, 16)
             else:
                 reply = None
             if function == 'focus_auto' or function == 'zoom_digital' or function == 'WD' \
@@ -295,11 +279,11 @@ class Camera(object):
                     reply = 'BW'
             elif function == 'color_gain':
                 reply = int(reply[3], 16)
-                reply = ( (reply - 0) / (14 - 0) ) * (200 - 60) + 60
+                reply = ((reply - 0) / (14 - 0)) * (200 - 60) + 60
                 reply = str(reply)+'%'
             elif function == 'color_hue':
                 reply = int(reply[3], 16)
-                reply = ( (reply - 0) / (14 - 0) ) * (14 - -14) + -14
+                reply = ((reply - 0) / (14 - 0)) * (14 - -14) + -14
                 reply = str(reply)+'°'
             elif function == 'video':
                 reply = video_val.get(reply)
@@ -327,8 +311,7 @@ class Camera(object):
                 print dbg.format(function=function, reply=reply)
             return reply
 
-    #FIXME: IR_Receive_Return
-    #FIXME: Pan-tiltLimitSet
+
     # ----------------------------------------------------
     # ---------------------- POWER -----------------------
     # ----------------------------------------------------
@@ -359,9 +342,9 @@ class Camera(object):
         return self._query('power_auto')
     @power.setter
     def power_auto(self, time):
-        subcmd = '\x40' + self._i2v(time)
+        subcmd = '\x40' + i2v(time)
         if debug:
-            print('power_auto',time)
+            print('power_auto', time)
         return self._cmd_cam(subcmd)
 
     # ----------------------------------------------------
@@ -416,9 +399,9 @@ class Camera(object):
     def zoom(self, value):
         if debug:
             print('zoom', value)
-        subcmd = "\x47" + self._i2v(value)
+        subcmd = "\x47" + i2v(value)
         return self._cmd_cam(subcmd)
-    
+
     @property
     def zoom_digital(self):
         return self._query('zoom_digital')
@@ -484,8 +467,8 @@ class Camera(object):
     @focus.setter
     def focus(self, value):
         if debug:
-            print('focus',value)
-        subcmd = "\x48" + self._i2v(value)
+            print('focus', value)
+        subcmd = "\x48" + i2v(value)
         return self._cmd_cam(subcmd)
 
     @property
@@ -528,8 +511,8 @@ class Camera(object):
         Can be set in a range from 1000 (∞) to F000 (10 mm)
         """
         if debug:
-            print('focus_nearlimit',value)
-        subcmd = "\x28" + self._i2v(value)
+            print('focus_nearlimit', value)
+        subcmd = "\x28" + i2v(value)
         return self._cmd_cam(subcmd)
 
     def focus_auto_sensitivity(self, state):
@@ -566,7 +549,7 @@ class Camera(object):
         if debug:
             print('focus_auto_active', value)
             print('this function has never been tested')
-        subcmd = "\x27" + self._i2v(value)
+        subcmd = "\x27" + i2v(value)
         return self._cmd_cam(subcmd)
 
     def focus_ir(self, state):
@@ -626,7 +609,7 @@ class Camera(object):
         """
         if debug:
             print('gain_red', value)
-        subcmd = "\x43\x00\x00" + self._i2v(value)
+        subcmd = "\x43\x00\x00" + i2v(value)
         return self._cmd_cam(subcmd)
 
     def gain_red_reset(self):
@@ -646,7 +629,7 @@ class Camera(object):
         """
         if debug:
             print('gain_blue', value)
-        subcmd = "\x44\x00\x00" + self._i2v(value)
+        subcmd = "\x44\x00\x00" + i2v(value)
         return self._cmd_cam(subcmd)
 
     def gain_blue_reset(self):
@@ -673,7 +656,7 @@ class Camera(object):
     @AE.setter
     def AE(self, mode):
         if debug:
-            print('AE',mode)
+            print('AE', mode)
         if mode == 'auto':
             subcmd = "\x39\x00"
         elif mode == 'shutter':
@@ -685,7 +668,7 @@ class Camera(object):
         elif mode == 'bright':
             subcmd = "\x39\x0D"
         return self._cmd_cam(subcmd)
-    
+
     @property
     def slowshutter(self):
         """
@@ -700,7 +683,7 @@ class Camera(object):
             subcmd = "\x5A\x02"
         if mode == 'manual':
             subcmd = "\x5A\x03"
-        return self._cmd_cam(subcmd)        
+        return self._cmd_cam(subcmd)
 
     @property
     def shutter(self):
@@ -712,9 +695,9 @@ class Camera(object):
         """
         if debug:
             print('shutter', value)
-        subcmd = '\x4A' + self._i2v(value)
+        subcmd = '\x4A' + i2v(value)
         return self._cmd_cam(subcmd)
-    
+
     @property
     def iris(self):
         return self._query('iris')
@@ -724,10 +707,10 @@ class Camera(object):
         Set iris aperture
         """
         if debug:
-            print('iris',value)
-        subcmd = '\x4B' + self._i2v(value)
+            print('iris', value)
+        subcmd = '\x4B' + i2v(value)
         return self._cmd_cam(subcmd)
-    
+
     @property
     def gain(self):
         """
@@ -737,8 +720,8 @@ class Camera(object):
     @gain.setter
     def gain(self, value):
         if debug:
-            print('gain',value)
-        subcmd = '\x4C' + self._i2v(value)
+            print('gain', value)
+        subcmd = '\x4C' + i2v(value)
         return self._cmd_cam(subcmd)
 
     def gain_limit(self, value):
@@ -759,8 +742,8 @@ class Camera(object):
     @bright.setter
     def bright(self, value):
         if debug:
-            print('bright',value)
-        subcmd = '\x4D\x00\x00' + self._i2v(value)
+            print('bright', value)
+        subcmd = '\x4D\x00\x00' + i2v(value)
         return self._cmd_cam(subcmd)
 
     @property
@@ -789,7 +772,7 @@ class Camera(object):
     def expo_compensation_amount(self, value):
         if debug:
             print('expo_compensation_amount', value)
-        subcmd = '\x4E\x00\x00' + self._i2v(value)
+        subcmd = '\x4E\x00\x00' + i2v(value)
         return self._cmd_cam(subcmd)
 
     @property
@@ -834,10 +817,10 @@ class Camera(object):
     @aperture.setter
     def aperture(self, value):
         if debug:
-            print('aperture',value)
-        subcmd = '\x42' + self._i2v(value)
+            print('aperture', value)
+        subcmd = '\x42' + i2v(value)
         return self._cmd_cam(subcmd)
-    
+
     @property
     def HR(self):
         """
@@ -971,7 +954,7 @@ class Camera(object):
     def IR_auto_threshold(self, level):
         if debug:
             print('IR_auto_threshold', level)
-        subcmd = '\x21\x00\x00' + self._i2v(value)
+        subcmd = '\x21\x00\x00' + i2v(value)
         return self._cmd_cam(subcmd)
 
     # ----------- MEMORY -------------
@@ -984,12 +967,12 @@ class Camera(object):
             return
         if debug:
             print("memory")
-        subcmd = "\x3f" + chr(func) + chr( 0b0111 & num)
+        subcmd = "\x3f" + chr(func) + chr(0b0111 & num)
         return self._cmd_cam(subcmd)
 
     def memory_reset(self, num):
         return self._memory(0x00, num)
-    
+
     def memory_set(self, num):
         return self._memory(0x01, num)
 
@@ -1013,7 +996,7 @@ class Camera(object):
             print('chromasuppress', level)
         subcmd = "\x5F" + chr(level)
         return self._cmd_cam(subcmd)
-        
+
     @property
     def color_gain(self):
         """
@@ -1026,7 +1009,7 @@ class Camera(object):
             print('color_gain', value)
         subcmd = "\x49\x00\x00\x00" + value
         return self._cmd_cam(subcmd)
-    
+
 
     @property
     def color_hue(self):
@@ -1140,17 +1123,17 @@ class Camera(object):
         if debug:
             print('down')
         return self._cmd_ptd(0x03, 0x02)
-    
+
     def left(self):
         if debug:
             print('left')
         return self._cmd_ptd(0x01, 0x03)
-    
+
     def right(self):
         if debug:
             print('right')
         return self._cmd_ptd(0x02, 0x03)
-    
+
     def upleft(self):
         if debug:
             print('upleft')
@@ -1160,12 +1143,12 @@ class Camera(object):
         if debug:
             print('upright')
         return self._cmd_ptd(0x02, 0x01)
-    
+
     def downleft(self):
         if debug:
             print('downleft')
         return self._cmd_ptd(0x01, 0x02)
-    
+
     def downright(self):
         if debug:
             print('downright')
@@ -1188,9 +1171,9 @@ class Camera(object):
         if debug:
             print('pan', pan)
         pan = degree_to_visca(pan, 'pan')
-        pan = self._i2v(pan)
+        pan = i2v(pan)
         tilt = degree_to_visca(self.tilt, 'tilt')
-        tilt = self._i2v(tilt)
+        tilt = i2v(tilt)
         subcmd = '\x02' + chr(self.pan_speed) + chr(self.tilt_speed) + pan + tilt
         self._cmd_cam_alt(subcmd)
 
@@ -1208,9 +1191,9 @@ class Camera(object):
         if debug:
             print('tilt', tilt)
         pan = degree_to_visca(self.pan, 'pan')
-        pan = self._i2v(pan)
+        pan = i2v(pan)
         tilt = degree_to_visca(tilt, 'tilt')
-        tilt = self._i2v(tilt)
+        tilt = i2v(tilt)
         subcmd = '\x02' + chr(self.pan_speed) + chr(self.tilt_speed) + pan + tilt
         self._cmd_cam_alt(subcmd)
 

@@ -18,3 +18,20 @@ def hex_to_int(value):
         print 'error length is :', len(value)
         print("don't understand this reply - this have to be implemented")
     return value
+
+def i2v(self, value):
+    """
+    return word as dword in visca format
+    packets are not allowed to be 0xff
+    so for numbers the first nibble is 0000
+    and 0xfd gets encoded into 0x0f 0x0xd
+    """
+    if type(value) == unicode:
+        value = int(value)
+    ms = (value &  0b1111111100000000) >> 8
+    ls = (value &  0b0000000011111111)
+    p = (ms&0b11110000)>>4
+    r = (ls&0b11110000)>>4
+    q = ms&0b1111
+    s = ls&0b1111
+    return chr(p)+chr(q)+chr(r)+chr(s)

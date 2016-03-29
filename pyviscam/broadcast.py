@@ -1,14 +1,34 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
-# imports from pyviscam lib
-from port import Serial
-from camera import Camera
-from convert import hex_to_int
-from pan_tilt_utils import degree_to_visca, visca_to_degree
+"""
+Broadcast module contains Viscam Class
+Viscam is the first object to create
 
-debug = 1
+Typically, it can be done with :
+
+from pyviscam.broadcast import Viscam
+cams = Viscam()
+# choose the first serial port available
+port = cams.serial.listports()[0]
+# reset method will ask about cameras on this line
+cams.reset(port)
+# this is the list of the camera found on this serial port
+cams = cams.get_instances()
+# go to home (for pan_tilt camera)
+cams[0].home()
+# Set Automatic Exposure
+cams[0].AE = 'auto'
+# ask about the White Balance
+cams[0].query('WB')
+
+"""
+
+import sys
+from pyviscam.port import Serial
+from pyviscam.camera import Camera
+
+from pyviscam import debug
 
 
 class Viscam(object):
@@ -33,6 +53,9 @@ class Viscam(object):
                 print("ERROR 34 - no serial port selected")
 
     def get_instances(self):
+        """
+        Get instances of Camera Objects
+        """
         return self.viscams
 
     def reset(self, port):
@@ -61,14 +84,14 @@ class Viscam(object):
         Create Visca Instances for each device found on the serial bus
         """
         #address of first device. should be 1:
-        first=1
+        first = 1
 
         reply = self._send_broadcast('\x30'+chr(first)) # set address
-        if isinstance(reply,type(None)):
+        if isinstance(reply, type(None)):
             if debug:
                 print("ERROR 35 - No reply from the bus")
             sys.exit(1)
-        if len(reply)!=4 or reply[-1:]!='\xff':
+        if len(reply) != 4 or reply[-1:] != '\xff':
             if debug:
                 print("ERROR 36 - enumerating devices")
             sys.exit(1)
@@ -104,7 +127,7 @@ class Viscam(object):
         clear the interfaces on the bys
         """
         # interface clear all
-        reply = self._send_broadcast('\x01\x00\x01') 
+        reply = self._send_broadcast('\x01\x00\x01')
         if not reply[1:] == '\x01\x00\x01\xff':
             print("ERROR 39 - when clearing interfaces on the bus!")
             sys.exit(1)
@@ -134,16 +157,16 @@ class Viscam(object):
         """
         # we are the controller with id=0
         sender = 0
-        if recipient==-1:
+        if recipient == -1:
             #broadcast:
-            rbits=0x8
+            rbits = 0x8
         else:
             # the recipient (address = 3 bits)
-            rbits=recipient & 0b111
+            rbits = recipient & 0b111
 
-        sbits=(sender & 0b111)<<4
-        header=0b10000000 | sbits | rbits
-        terminator=0xff
+        sbits = (sender & 0b111)<<4
+        header = 0b10000000 | sbits | rbits
+        terminator = 0xff
         packet = chr(header)+data+chr(terminator)
         self.serial.mutex.acquire()
         self.serial._write_packet(packet)
@@ -152,7 +175,7 @@ class Viscam(object):
             if reply[-1:] != '\xff':
                 if debug:
                     print("received packet not terminated correctly: %s" % reply.encode('hex'))
-                reply=None
+                reply = None
             self.serial.mutex.release()
             return reply
         else:

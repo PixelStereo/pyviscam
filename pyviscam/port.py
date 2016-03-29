@@ -11,7 +11,7 @@ except:
     # python 3
     from _thread import allocate_lock
 
-debug = 1
+from pyviscam import debug
 
 class Serial(object):
     def __init__(self):

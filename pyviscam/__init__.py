@@ -17,3 +17,5 @@ Changelog:
 - v0.0.1  -  Mar. 26th 2016
     - First draft
 """
+
+debug = 1
