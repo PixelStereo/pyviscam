@@ -92,7 +92,6 @@ class Serial(object):
             elif self.port.inWaiting():
                 self.recv_packet("ignored")
             self.port.write(packet)
-            self.dump(packet, "sent")
             return True
         else:
             if debug:
