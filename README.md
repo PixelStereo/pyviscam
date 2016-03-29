@@ -16,7 +16,7 @@ First, install dependancies :
     pip install -r https://raw.githubusercontent.com/PixelStereo/pyviscam/master/requirements.txt    
 Then, install the last version of the package. Remember it's an alpha version    
 
-    https://github.com/PixelStereo/pyviscam/archive/master.zip --upgrade
+    pip install https://github.com/PixelStereo/pyviscam/archive/master.zip --upgrade
 
 ## QUICKSTART
 * Run the example    
