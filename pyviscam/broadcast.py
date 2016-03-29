@@ -7,8 +7,6 @@ from port import Serial
 from camera import Camera
 from convert import hex_to_int
 from pan_tilt_utils import degree_to_visca, visca_to_degree
-from pyviscam import shutter_val, iris_val, expo_compensation_val, \
-					gain_val, gain_limit_val, video_val
 
 debug = 1
 
