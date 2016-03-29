@@ -135,7 +135,6 @@ class Camera(object):
         elif reply.startswith('\x90'+'\x50'):
             if debug == 4:
                 print('-------- QUERY COMPLETION ---------------')
-
             # We know this is a valid query request, please send it back
             return reply
         elif reply == '\x90'+'\x60'+'\x02'+'\xFF':
@@ -176,6 +175,8 @@ class Camera(object):
             print dbg.format(function=function, query=query.encode('hex'))
         # wait for the reply
         reply = self._come_back(query)
+        if reply == None:
+            return self._query(function)
         if reply:
             if debug == 4:
                 dbg = 'receive reply : {function} is {reply}'
