@@ -73,7 +73,7 @@ class Serial(object):
                     count+=1
                     packet=packet+chr(byte)
                 else:
-                    print("ERROR: Timeout waiting for reply")
+                    print("ERROR 12 - Timeout waiting for reply")
                     break
                 if byte==0xff:
                     break
