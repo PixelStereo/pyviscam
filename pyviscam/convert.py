@@ -35,3 +35,6 @@ def i2v(value):
     q = ms&0b1111
     s = ls&0b1111
     return chr(p)+chr(q)+chr(r)+chr(s)
+
+def scale(value, old_min, old_max, new_min, new_max):
+    return (float(((value - old_min) * (new_max - new_min))) / (old_max - old_min)) + new_min
