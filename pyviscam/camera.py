@@ -195,7 +195,7 @@ class Camera(object):
             if len(reply) > 2:
                 # it's a long answer, convert it to a list
                 reply = hex_unpack(reply, [])
-            elif isinstance(reply, hex) or isinstance(reply, str):
+            else:
                 # it's a single value, just convert it to a valid base 10 integer
                 reply = int(reply, 16)
             if function in high_res_params:
@@ -204,6 +204,7 @@ class Camera(object):
             elif function in very_high_res_params:
                 # parameter value is coded on 4 hexa numbers
                 reply = hex_to_int(reply)
+            # Check if the function has a special value to be translated
             if function in answers:
                 # translate visca code to real life value
                 if reply in answers[function]:
@@ -227,13 +228,11 @@ class Camera(object):
                 reply = [pan, tilt]
             else:
                 if debug == 4:
-                    print('FIX ME : generic translation for function :', function)
-                reply = hex_to_int(reply)
+                    print('FIX ME : is it normal that :', function, 'has no translation??' )
             if debug:
                 dbg = '{function} is {reply}'
                 print dbg.format(function=function, reply=reply)
             return reply
-
 
     # ----------------------------------------------------
     # ---------------------- POWER -----------------------
