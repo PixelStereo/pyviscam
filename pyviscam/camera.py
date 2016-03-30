@@ -463,7 +463,10 @@ class Camera(object):
             subcmd = "\x57\x01"
         elif state == 'zoom_trigger':
             subcmd = "\x57\x02"
-        return self._cmd_cam(subcmd)
+        if 'subcmd' in locals():
+        	return self._cmd_cam(subcmd)
+        else:
+        	return False
 
     def focus_auto_active(self, value):
         """
@@ -504,7 +507,6 @@ class Camera(object):
     def WB(self, mode):
         if debug:
             print('WB', mode)
-        prefix = '\x35'
         if mode == 'auto':
             subcmd = '\x00'
         elif mode == 'indoor':
@@ -515,8 +517,12 @@ class Camera(object):
             subcmd = '\x03'
         elif mode == 'manual':
             subcmd = '\x05'
-        subcmd = prefix + subcmd
-        return self._cmd_cam(subcmd)
+        if 'subcmd' in locals():
+        	prefix = '\x35'
+        	subcmd = prefix + subcmd
+        	return self._cmd_cam(subcmd)
+        else:
+        	return False
 
     def WB_trigger(self):
         return self._cmd_cam('\x10\x05')
@@ -590,7 +596,10 @@ class Camera(object):
             subcmd = "\x39\x0B"
         elif mode == 'bright':
             subcmd = "\x39\x0D"
-        return self._cmd_cam(subcmd)
+        if 'subcmd' in locals():
+        	return self._cmd_cam(subcmd)
+        else:
+        	return False
 
     @property
     def slowshutter(self):
@@ -606,7 +615,10 @@ class Camera(object):
             subcmd = "\x5A\x02"
         if mode == 'manual':
             subcmd = "\x5A\x03"
-        return self._cmd_cam(subcmd)
+        if 'subcmd' in locals():
+        	return self._cmd_cam(subcmd)
+        else:
+        	return False
 
     @property
     def shutter(self):
@@ -832,7 +844,10 @@ class Camera(object):
             subcmd = "\x63" + "\x02"
         if mode == 'BW':
             subcmd = "\x63" + "\x04"
-        return self._cmd_cam(subcmd)
+        if 'subcmd' in locals():
+        	return self._cmd_cam(subcmd)
+        else:
+        	return False
 
     @property
     def IR(self):
@@ -887,7 +902,7 @@ class Camera(object):
         if num > 5:
             num = 5
         if func < 0 or func > 2:
-            return
+            return False
         if debug:
             print("memory")
         subcmd = "\x3f" + chr(func) + chr(0b0111 & num)
@@ -967,14 +982,11 @@ class Camera(object):
         """
         return self._query('video')
     @video.setter
-    def video(self, resfreq):
-        res = resfreq[0]
-        freq = resfreq[1]
+    def video(self, anything):
         if debug:
-            print('video', str(res) + str(freq))
-        if res == 720:
-            if freq == 50:
-                subcmd = '\x35\x00\x09'
+            print('video', 'Fixed res to 720p50')
+        # fix to 720p50
+        subcmd = '\x35\x00\x09'
         return self._cmd_cam_alt(subcmd)
 
     @property
