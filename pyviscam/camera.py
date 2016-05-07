@@ -986,7 +986,7 @@ class Camera(object):
         res = resfreq[0]
         freq = resfreq[1]
         if debug:
-            print('video', anything)
+            print('video', str(res) + str(freq))
         if res == 720:
             if freq == 50:
                 subcmd = '\x35\x00\x09'
