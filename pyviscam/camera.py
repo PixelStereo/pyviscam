@@ -982,7 +982,9 @@ class Camera(object):
         """
         return self._query('video')
     @video.setter
-    def video(self, anything):
+    def video(self, resfreq):
+        res = resfreq[0]
+        freq = resfreq[1]
         if debug:
             print('video', anything)
         if res == 720:
