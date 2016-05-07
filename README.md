@@ -13,10 +13,10 @@ This is an API, if you're looking for an application to control your camera, hav
 
 First, install dependancies : 
 
-    https://raw.githubusercontent.com/PixelStereo/pyviscam/master/requirements.txt    
+    pip install -r https://raw.githubusercontent.com/PixelStereo/pyviscam/master/requirements.txt    
 Then, install the last version of the package. Remember it's an alpha version    
 
-    pip install https://github.com/PixelStereo/pyviscam/archive/0.0.4.zip   
+    pip install https://github.com/PixelStereo/pyviscam/archive/master.zip --upgrade
 
 ## QUICKSTART
 * Run the example    

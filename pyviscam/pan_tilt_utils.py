@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-def scale(value, old_min, old_max, new_min, new_max):
-    return (float(((value - old_min) * (new_max - new_min))) / (old_max - old_min)) + new_min
+from pyviscam.convert import scale
 
 def degree_to_visca(value, what, flip=False):
     if what == 'pan':

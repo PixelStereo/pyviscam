@@ -8,10 +8,9 @@ that answers to a broadcast message.
 
 """
 
-from pyviscam.convert import hex_to_int, i2v
+from pyviscam.convert import hex_to_int, i2v, scale
 from pyviscam.pan_tilt_utils import degree_to_visca, visca_to_degree
-from pyviscam.constants import shutter_val, iris_val, expo_compensation_val, gain_val, \
-                      gain_limit_val, video_val, queries
+from pyviscam.constants import queries, answers, high_res_params, very_high_res_params
 
 from pyviscam import debug
 
@@ -58,26 +57,19 @@ class Camera(object):
         else:
             # the recipient (address = 3 bits)
             rbits = recipient & 0b111
-
         sbits = (sender & 0b111)<<4
-
         header = 0b10000000 | sbits | rbits
-
         terminator = 0xff
-
         packet = chr(header)+data+chr(terminator)
-
         self.serial.mutex.acquire()
-
         self.serial._write_packet(packet)
         reply = self.serial.recv_packet()
         if reply:
             if reply[-1:] != '\xff':
                 if debug:
-                    print("received packet not terminated correctly: %s" % reply.encode('hex'))
+                    print("ERROR 41 - received packet not terminated correctly: %s" % reply.encode('hex'))
                 reply = None
             self.serial.mutex.release()
-
             return reply
         else:
             return None
@@ -135,19 +127,20 @@ class Camera(object):
         """
         # send the query and wait for feedback
         reply = self._send_packet(query)
-        #reply = reply.encode('hex')
         if reply == '\x90'+'\x60'+'\x03'+'\xFF':
             if debug:
                 print('-------- FULL BUFFER ---------------')
+            # buffer is full, send it again
             self._come_back(query)
         elif reply.startswith('\x90'+'\x50'):
             if debug == 4:
                 print('-------- QUERY COMPLETION ---------------')
+            # We know this is a valid query request, please send it back
             return reply
         elif reply == '\x90'+'\x60'+'\x02'+'\xFF':
             if debug:
                 print('-------- QUERY SYNTAX ERROR ---------------')
-            return
+            return False
 
     def _query(self, function=None):
         """
@@ -157,6 +150,8 @@ class Camera(object):
             :Return
         """
         if not function:
+            # maybe we could dump all functions if no function value is present
+            # or maybe add a 'all' function?
             return False
         if debug == 4:
             print('QUERY', function)
@@ -165,130 +160,65 @@ class Camera(object):
             # If we want to automatically query all properties, we must catch it here
             function = 'pan_tilt'
         # transform the property into its code (located in the __init__file of the package)
-        subcmd = queries.get(function)
-        if not subcmd:
+        if function in queries:
+            subcmd = queries.get(function)
+        else:
             if debug:
                 # there is no code for this function
-                dbg = 'function {function} has not yet been implemented'
+                dbg = 'ERROR 42 - function {function} has not yet been implemented'
                 print(dbg.format(function=function))
             return False
         # query starts with '\x09'
         query = '\x09' + subcmd
+        if debug == 4:
+            dbg = 'send {function} query : {query}'
+            print dbg.format(function=function, query=query.encode('hex'))
         # wait for the reply
         reply = self._come_back(query)
-        if debug == 4:
-            dbg = '{function} is {reply}'
-            print dbg.format(function=function, reply=reply.encode('hex'))
+        if reply == None:
+            return self._query(function)
         if reply:
+            if debug == 4:
+                dbg = 'receive reply : {function} is {reply}'
+                print dbg.format(function=function, reply=reply.encode('hex'))
+            # remove 2 first packets and the last terminator
+            # FIX ME : We must remove the first hex number elsewhere if we use multiples camera
             reply = reply[2:-1].encode('hex')
-            def hex_unpack(zoom, L, size=2):
-                part = zoom[:size]
-                zoom = zoom[size:]
-                L.append(part)
-                if zoom:
-                    hex_unpack(zoom, L)
-                    return L
+            # transform to a list of int
+            # FIX ME : found a nicer solution please, it's ugly !!
+            def hex_unpack(value, listt, size=2):
+                part = value[:size]
+                value = value[size:]
+                listt.append(part)
+                if value:
+                    hex_unpack(value, listt)
+                    return listt
             if len(reply) > 2:
+                # it's a long answer, convert it to a list
                 reply = hex_unpack(reply, [])
-            elif not type(reply):
-                reply = None
-            elif type(reply) == hex:
-                reply = int(reply, 16)
-            elif type(reply) == str:
-                reply = int(reply, 16)
             else:
-                reply = None
-            if function == 'focus_auto' or function == 'zoom_digital' or function == 'WD' \
-            or function == 'focus_ir' or function == 'power' or function == 'expo_compensation' \
-            or function == 'IR' or function == 'info_display' or function == 'backlight' \
-            or function == 'IR_auto' or function == 'HR' or function == 'high_sensitivity' \
-            or function == 'IR_receive':
-                if reply == 2:
-                    reply = True
-                elif reply == 3:
-                    reply = False
-            elif function == 'focus_auto_sensitivity':
-                if reply == 2:
-                    reply = 'normal'
+                # it's a single value, just convert it to a valid base 10 integer
+                reply = int(reply, 16)
+            if function in high_res_params:
+                # parameter value is coded on 2 hexa numbers
+                reply = hex_to_int(reply)
+            elif function in very_high_res_params:
+                # parameter value is coded on 4 hexa numbers
+                reply = hex_to_int(reply)
+            # Check if the function has a special value to be translated
+            if function in answers:
+                # translate visca code to real life value
+                if reply in answers[function]:
+                    reply = answers[function][reply]
+            elif function == 'NR' or function == 'gamma' or function == 'chromasuppress':
+                reply = reply
+            elif function == 'color_gain' or function == 'color_hue':
+                reply = int(reply[3], 16)
+                reply = str(scale(reply, 0, 14, 60, 200))
+                if function == 'color_gain':
+                    reply = reply + '%'
                 else:
-                    reply = 'low'
-            elif function == 'focus_auto_mode':
-                if reply == 0:
-                    reply = 'normal'
-                elif reply == 1:
-                    reply = 'interval'
-                elif reply == 2:
-                    reply = 'zoom_trigger'
-            elif function == 'WB':
-                if reply == 0:
-                    reply = 'auto'
-                if reply == 1:
-                    reply = 'indoor'
-                if reply == 2:
-                    reply = 'outdoor'
-                if reply == 3:
-                    reply = 'trigger'
-                if reply == 5:
-                    reply = 'manual'
-            elif function == 'AE':
-                if reply == 0:
-                    reply = 'auto'
-                if reply == 3:
-                    reply = 'manual'
-                if reply == 10:
-                    reply = 'shutter'
-                if reply == 11:
-                    reply = 'iris'
-                if reply == 13:
-                    reply = 'bright'
-            elif function == 'slowshutter':
-                if reply == 2:
-                    reply = 'auto'
-                else:
-                    reply = 'manual'
-            elif function == 'shutter':
-                reply = hex_to_int(reply)
-                reply = shutter_val.get(reply)
-            elif function == 'iris':
-                reply = hex_to_int(reply)
-                reply = iris_val.get(reply)
-            elif function == 'gain':
-                reply = hex_to_int(reply)
-                reply = gain_val.get(reply)
-            elif function == 'gain_limit':
-                reply = int(reply[3], 16)
-                reply = gain_limit_val.get(reply)
-            elif function == 'bright':
-                reply = hex_to_int(reply)
-                print('bright feedback need some love')
-            elif function == 'expo_compensation_amount':
-                reply = int(reply[3], 16)
-                reply = expo_compensation_val.get(reply)
-            elif function == 'NR':
-                reply = reply
-            elif function == 'gamma':
-                reply = reply
-            elif function == 'chromasuppress':
-                reply = reply
-            elif function == 'FX':
-                if reply == 0:
-                    reply = 'normal'
-                if reply == 2:
-                    reply = 'negart'
-                if reply == 4:
-                    reply = 'BW'
-            elif function == 'color_gain':
-                reply = int(reply[3], 16)
-                reply = ((reply - 0) / (14 - 0)) * (200 - 60) + 60
-                reply = str(reply)+'%'
-            elif function == 'color_hue':
-                reply = int(reply[3], 16)
-                reply = ((reply - 0) / (14 - 0)) * (14 - -14) + -14
-                reply = str(reply)+'°'
-            elif function == 'video':
-                reply = video_val.get(reply)
-            elif function == 'video_next':
-                reply = video_val.get(reply)
+                    reply = reply + '°'
             elif function == 'pan_tilt':
                 pan = reply[0:4]
                 tilt = reply[4:8]
@@ -297,20 +227,13 @@ class Camera(object):
                 pan = visca_to_degree(pan, 'pan')
                 tilt = visca_to_degree(tilt, 'tilt')
                 reply = [pan, tilt]
-            elif function == 'fan':
-                if reply == 0:
-                    reply = True
-                else:
-                    reply = False
             else:
                 if debug == 4:
-                    print('generic translation for function :', function)
-                reply = hex_to_int(reply)
+                    print('FIX ME : is it normal that :', function, 'has no translation??' )
             if debug:
                 dbg = '{function} is {reply}'
                 print dbg.format(function=function, reply=reply)
             return reply
-
 
     # ----------------------------------------------------
     # ---------------------- POWER -----------------------
@@ -540,7 +463,10 @@ class Camera(object):
             subcmd = "\x57\x01"
         elif state == 'zoom_trigger':
             subcmd = "\x57\x02"
-        return self._cmd_cam(subcmd)
+        if 'subcmd' in locals():
+        	return self._cmd_cam(subcmd)
+        else:
+        	return False
 
     def focus_auto_active(self, value):
         """
@@ -581,7 +507,6 @@ class Camera(object):
     def WB(self, mode):
         if debug:
             print('WB', mode)
-        prefix = '\x35'
         if mode == 'auto':
             subcmd = '\x00'
         elif mode == 'indoor':
@@ -592,8 +517,12 @@ class Camera(object):
             subcmd = '\x03'
         elif mode == 'manual':
             subcmd = '\x05'
-        subcmd = prefix + subcmd
-        return self._cmd_cam(subcmd)
+        if 'subcmd' in locals():
+        	prefix = '\x35'
+        	subcmd = prefix + subcmd
+        	return self._cmd_cam(subcmd)
+        else:
+        	return False
 
     def WB_trigger(self):
         return self._cmd_cam('\x10\x05')
@@ -667,7 +596,10 @@ class Camera(object):
             subcmd = "\x39\x0B"
         elif mode == 'bright':
             subcmd = "\x39\x0D"
-        return self._cmd_cam(subcmd)
+        if 'subcmd' in locals():
+        	return self._cmd_cam(subcmd)
+        else:
+        	return False
 
     @property
     def slowshutter(self):
@@ -683,7 +615,10 @@ class Camera(object):
             subcmd = "\x5A\x02"
         if mode == 'manual':
             subcmd = "\x5A\x03"
-        return self._cmd_cam(subcmd)
+        if 'subcmd' in locals():
+        	return self._cmd_cam(subcmd)
+        else:
+        	return False
 
     @property
     def shutter(self):
@@ -909,7 +844,10 @@ class Camera(object):
             subcmd = "\x63" + "\x02"
         if mode == 'BW':
             subcmd = "\x63" + "\x04"
-        return self._cmd_cam(subcmd)
+        if 'subcmd' in locals():
+        	return self._cmd_cam(subcmd)
+        else:
+        	return False
 
     @property
     def IR(self):
@@ -964,7 +902,7 @@ class Camera(object):
         if num > 5:
             num = 5
         if func < 0 or func > 2:
-            return
+            return False
         if debug:
             print("memory")
         subcmd = "\x3f" + chr(func) + chr(0b0111 & num)
@@ -1044,11 +982,9 @@ class Camera(object):
         """
         return self._query('video')
     @video.setter
-    def video(self, resfreq):
-        res = resfreq[0]
-        freq = resfreq[1]
+    def video(self, anything):
         if debug:
-            print('video', str(res) + str(freq))
+            print('video', anything)
         if res == 720:
             if freq == 50:
                 subcmd = '\x35\x00\x09'
@@ -1096,6 +1032,9 @@ class Camera(object):
     # ----------------------------------------------------
     # ----------------------  PAN TILT -------------------
     # ----------------------------------------------------
+
+    # FIX ME : Pan/Tilt Status Code List
+
     def _cmd_ptd(self, lr, ud):
         """
         simple shortcut to send _cmd_cam with pan_tilt_speed
