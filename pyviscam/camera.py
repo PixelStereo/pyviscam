@@ -1052,6 +1052,9 @@ class Camera(object):
         if res == 720:
             if freq == 50:
                 subcmd = '\x35\x00\x09'
+        elif res == 1080:
+            if freq == 25:
+                subcmd = '\x35\x00\x08'
         return self._cmd_cam_alt(subcmd)
 
     @property
