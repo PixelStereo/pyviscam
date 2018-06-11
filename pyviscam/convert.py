@@ -15,7 +15,7 @@ def hex_to_int(value):
         d=int(value[1],16)
         value = ((((((16*d)+c)*16)+b)*16)+a)
     else:
-        print 'error length is :', len(value)
+        print('error length is :', len(value))
         print("don't understand this reply - this have to be implemented")
     return value
 

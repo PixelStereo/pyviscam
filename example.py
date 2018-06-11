@@ -4,7 +4,7 @@
 from time import sleep
 from pyviscam.broadcast import Viscam, Camera
 
-print '----- visca bus initialisation -----'
+print('----- visca bus initialisation -----')
 # create a visca bus object
 cams = Viscam()
 # get a list of serial ports available and select the last one

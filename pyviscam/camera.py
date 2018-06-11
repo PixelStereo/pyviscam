@@ -172,7 +172,7 @@ class Camera(object):
         query = '\x09' + subcmd
         if debug == 4:
             dbg = 'send {function} query : {query}'
-            print dbg.format(function=function, query=query.encode('hex'))
+            print(dbg.format(function=function, query=query.encode('hex')))
         # wait for the reply
         reply = self._come_back(query)
         if reply == None:
@@ -180,7 +180,7 @@ class Camera(object):
         if reply:
             if debug == 4:
                 dbg = 'receive reply : {function} is {reply}'
-                print dbg.format(function=function, reply=reply.encode('hex'))
+                print(dbg.format(function=function, reply=reply.encode('hex')))
             # remove 2 first packets and the last terminator
             # FIX ME : We must remove the first hex number elsewhere if we use multiples camera
             reply = reply[2:-1].encode('hex')
@@ -232,7 +232,7 @@ class Camera(object):
                     print('FIX ME : is it normal that :', function, 'has no translation??' )
             if debug:
                 dbg = '{function} is {reply}'
-                print dbg.format(function=function, reply=reply)
+                print(dbg.format(function=function, reply=reply))
             return reply
 
     # ----------------------------------------------------
