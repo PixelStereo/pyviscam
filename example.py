@@ -9,22 +9,14 @@ print('----- visca bus initialisation -----')
 cams = v_cams()
 # get a list of serial ports available and select the last one
 ports = cams.serial.listports()
-port = None
-for item in ports:
-	if 'usbserial' in item:
-		port = item
-if not port:
-	port = ports[0]
-print('serial port opening : ' + port)
 # open a connection on the serial object
-cams.reset(port)
+cams.reset(ports[0])
 v1 = cams.get_instances()[0]
-
 print('available parameters : ')
 print('-------------------------')
 prop_list = [p for p in dir(Camera) if isinstance(getattr(Camera, p),property)]
 for prop in prop_list:
-	v1._query(prop)
+	print(prop, v1._query(prop))
 
 
 """

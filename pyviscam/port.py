@@ -37,6 +37,19 @@ class Serial(object):
                 print('ERROR 11 - Unsupported platform')
             sys.exit(1)
         result = []
+        for item in ports:
+            if 'usbserial' in item:
+                # this is for osx on my computer for testing
+                result.append(item)
+        if not result:
+            try:
+                result = ports[0]
+            except IndexError:
+                print('There is no available ports')
+                quit()
+        print('serial port opening : ' + str(result))
+        # this is too long, takes 10/20 secondes to happend
+        """
         for port in ports:
             try:
                 s = serial.Serial(port)
@@ -44,6 +57,7 @@ class Serial(object):
                 result.append(port)
             except (OSError, serial.SerialException):
                 pass
+        """
         return result
 
     def open(self, portname):
