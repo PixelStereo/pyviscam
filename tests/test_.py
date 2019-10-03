@@ -13,5 +13,5 @@ lib_path = os.path.abspath('./../pyviscam')
 sys.path.append(lib_path)
 
 
-from pyviscam.broadcast import Viscam
+from pyviscam.broadcast import v_cams
 

@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-Broadcast module contains Viscam Class
-Viscam is the first object to create
+Broadcast module contains v_cams Class
+v_cams is the first object to create
 
 Typically, it can be done with :
 
-from pyviscam.broadcast import Viscam
-cams = Viscam()
+from pyviscam.broadcast import v_cams
+cams = v_cams()
 # choose the first serial port available
 port = cams.serial.listports()[0]
 # reset method will ask about cameras on this line
@@ -31,14 +31,14 @@ from pyviscam.camera import Camera
 from pyviscam import debug
 
 
-class Viscam(object):
+class v_cams(object):
     """
-    Viscam is a chain of Visca camera
-    Viscam is a broadcast command relative to a Serial port
-    Viscam initialisation call _cmd_address_set and _if_clear
+    v_cams is a chain of Visca camera
+    v_cams is a broadcast command relative to a Serial port
+    v_cams initialisation call _cmd_address_set and _if_clear
     """
     def __init__(self, port=None):
-        super(Viscam, self).__init__()
+        super(v_cams, self).__init__()
         # create a serial port communication
         serial = Serial()
         # make it available from everywhere

@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from time import sleep
-from pyviscam.broadcast import Viscam, Camera
+from pyviscam.broadcast import v_cams, Camera
 
 print('----- visca bus initialisation -----')
 # create a visca bus object
-cams = Viscam()
+cams = v_cams()
 # get a list of serial ports available and select the last one
 ports = cams.serial.listports()
 port = None
