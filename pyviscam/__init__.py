@@ -5,7 +5,7 @@ This module allows you to control video camera through Visca protocol
 
 -------------------------------------------------------------------------------
 
-    Copyright (c) 2016 Pixel Stereo
+    Copyright (c) 2016-2019 Pixel Stereo
 
 -------------------------------------------------------------------------------
 Changelog:
