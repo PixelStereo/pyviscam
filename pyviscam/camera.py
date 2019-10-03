@@ -838,11 +838,11 @@ class Camera(object):
     def FX(self, mode):
         if debug:
             print('FX', mode)
-        if mode == 'normal':
+        if mode == 'Normal':
             subcmd = "\x63" + "\x00"
-        if mode == 'negart':
+        if mode == 'NegArt':
             subcmd = "\x63" + "\x02"
-        if mode == 'BW':
+        if mode == 'B&W':
             subcmd = "\x63" + "\x04"
         if 'subcmd' in locals():
         	return self._cmd_cam(subcmd)
