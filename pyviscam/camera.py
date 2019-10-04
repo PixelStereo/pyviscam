@@ -528,40 +528,40 @@ class Camera(object):
         return self._cmd_cam('\x10\x05')
 
     @property
-    def gain_red(self):
-        return self._query('gain_red')
-    @gain_red.setter
-    def gain_red(self, value):
+    def RGain(self):
+        return self._query('RGain')
+    @RGain.setter
+    def RGain(self, value):
         """
         Manual Control of R Gain
             :0..255 set the red gain
         """
         if debug:
-            print('gain_red', value)
-        subcmd = "\x43\x00\x00" + i2v(value)
+            print('RGain', value)
+        subcmd = "\x43" + i2v(value)
         return self._cmd_cam(subcmd)
 
-    def gain_red_reset(self):
+    def RGain_reset(self):
         """
         Reset the Red Gain
         """
         return self._cmd_cam('\x03\x00')
 
     @property
-    def gain_blue(self):
-        return self._query('gain_blue')
-    @gain_blue.setter
-    def gain_blue(self, value):
+    def BGain(self):
+        return self._query('BGain')
+    @BGain.setter
+    def BGain(self, value):
         """
         Manual Control of B Gain
             :0..255 set the blue gain
         """
         if debug:
-            print('gain_blue', value)
-        subcmd = "\x44\x00\x00" + i2v(value)
+            print('BGain', value)
+        subcmd = "\x44" + i2v(value)
         return self._cmd_cam(subcmd)
 
-    def gain_blue_reset(self):
+    def BGain_reset(self):
         """
         Reset the Blue Gain
         """
@@ -608,17 +608,14 @@ class Camera(object):
         """
         return self._query('slowshutter')
     @slowshutter.setter
-    def slowshutter(self, mode):
+    def slowshutter(self, state):
         if debug:
-            print('slowshutter', mode)
-        if mode == 'auto':
+            print('slowshutter', state)
+        if state:
             subcmd = "\x5A\x02"
-        if mode == 'manual':
-            subcmd = "\x5A\x03"
-        if 'subcmd' in locals():
-        	return self._cmd_cam(subcmd)
         else:
-        	return False
+            subcmd = "\x5A\x03"
+        return self._cmd_cam(subcmd)
 
     @property
     def shutter(self):

@@ -115,11 +115,6 @@ class v_cams(object):
                 device = device + 1
                 cam = Camera(self)
                 viscams.append(cam)
-                # Turn off digital zoom aka zoom_digital
-                cam.zoom_digital = False
-                # Turn off datascreen display
-                cam.menu_off()
-                cam.info_display = False
             return viscams
 
     def _if_clear(self):
