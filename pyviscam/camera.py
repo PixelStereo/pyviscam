@@ -977,20 +977,37 @@ class Camera(object):
         Return the state of the video (resolution + frequency)
         720:50
         """
-        return self._query('video')
+        return self._query('video_next')
+        print('need reboot')
     @video.setter
     def video(self, resfreq):
-        res = resfreq[0]
-        freq = resfreq[1]
         if debug:
-            print('video', str(res) + str(freq))
-        if res == 720:
-            if freq == 50:
-                subcmd = '\x35\x00\x09'
-        elif res == 1080:
-            if freq == 25:
-                subcmd = '\x35\x00\x08'
-        return self._cmd_cam_alt(subcmd)
+            print('video', resfreq)
+        if resfreq == '1080PsF29.97':
+            subcmd = "\x35" + "\x00" + "\x00"
+        elif resfreq == '1080p29.97':
+            subcmd = "\x35" + "\x00" + "\x01"
+        elif resfreq == '720p59.94':
+            subcmd = "\x35" + "\x00" + "\x02"
+        elif resfreq == '720p29.97':
+            subcmd = "\x35" + "\x00" + "\x03"
+        elif resfreq == 'NTSC':
+            subcmd = "\x35" + "\x00" + "\x04"
+        elif resfreq == '1080PsF25':
+            subcmd = "\x35" + "\x00" + "\x08"
+        elif resfreq == '720p50':
+            subcmd = "\x35" + "\x00" + "\x09"
+        elif resfreq == '720p25':
+            subcmd = "\x35" + "\x00" + "\x0A"
+        elif resfreq == '1080i50':
+            subcmd = "\x35" + "\x00" + "\x0B"
+        elif resfreq == 'PAL':
+            subcmd = "\x35" + "\x00" + "\x0C"
+        if 'subcmd' in locals():
+            print('need reboot')
+            return self._cmd_cam_alt(subcmd)
+        else:
+            return False
 
     @property
     def IR_receive(self):
