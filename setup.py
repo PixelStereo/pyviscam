@@ -5,11 +5,11 @@ from distutils.core import setup
 setup(
   name = 'pyviscam',
   packages = ['pyviscam'], 
-  version = '0.0.4',
+  version = '0.0.5',
   description = 'Control camera through Visca protocol',
   author = 'Pixel Stereo',
   url='https://github.com/PixelStereo/pyviscam', 
-  download_url = 'https://github.com/PixelStereo/pyviscam/tarball/0.0.4.zip', 
+  download_url = 'https://github.com/PixelStereo/pyviscam/tarball/0.0.5.zip', 
   classifiers = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',
