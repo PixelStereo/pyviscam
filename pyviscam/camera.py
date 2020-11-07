@@ -902,6 +902,7 @@ class Camera(object):
             return False
         if debug:
             print("memory")
+        num = int(num)
         subcmd = "\x3f" + chr(func) + chr(0b0111 & num)
         return self._cmd_cam(subcmd)
 
